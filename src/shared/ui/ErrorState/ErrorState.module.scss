@@ -1,0 +1,13 @@
+.errorState {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.errorState__title {
+  margin: 0;
+}
+
+.errorState__description {
+  margin: 8px 0 0;
+}
