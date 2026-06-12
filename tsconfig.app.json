@@ -23,7 +23,8 @@
       "@features/*": ["src/features/*"],
       "@entities/*": ["src/entities/*"],
       "@shared/*": ["src/shared/*"],
-      "@assets/*": ["src/shared/assets/*"]
+      "@assets/*": ["src/shared/assets/*"],
+      "@image/*": ["src/image/*"]
     },
 
     /* Linting */

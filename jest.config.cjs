@@ -11,6 +11,7 @@ module.exports = {
     '^@entities/(.*)$': '<rootDir>/src/entities/$1',
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^@assets/(.*)$': '<rootDir>/src/shared/assets/$1',
+    '\\.(jpg|jpeg|png|gif|webp|avif|svg)$': '<rootDir>/src/test/fileMock.ts',
     '\\.(css|scss|sass)$': 'identity-obj-proxy',
   },
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],

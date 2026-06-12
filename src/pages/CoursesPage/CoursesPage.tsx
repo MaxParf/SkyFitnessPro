@@ -1,10 +1,69 @@
+import logoIcon from '@image/Logo.svg'
+import skyFitnessLogo from '@image/SkyFitnessPro.svg'
+import { courseMockItems } from '@entities/course/model/course.mock'
+import { CourseCard } from '@entities/course/ui/CourseCard'
+import { Button } from '@shared/ui/Button'
+import { Container } from '@shared/ui/Container'
+import { Icon } from '@shared/ui/Icon'
+
 import styles from './CoursesPage.module.scss'
 
 export function CoursesPage() {
+  const handleScrollTop = (): void => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
-    <section className={styles.page}>
-      <h1 className={styles.page__title}>Курсы</h1>
-      <p className={styles.page__text}>Стартовая страница каталога курсов.</p>
+    <section className={styles['courses-page']} aria-labelledby="courses-page-title">
+      <Container className={styles['courses-page__container']}>
+        <header className={styles['courses-page__header']}>
+          <div className={styles['courses-page__brand-group']}>
+            <a className={styles['courses-page__brand']} href="/" aria-label="SkyFitnessPro">
+              <Icon
+                alt=""
+                className={styles['courses-page__brand-icon']}
+                decorative
+                src={logoIcon}
+              />
+              <img
+                className={styles['courses-page__brand-text']}
+                src={skyFitnessLogo}
+                alt="SkyFitnessPro"
+              />
+            </a>
+            <p className={styles['courses-page__subtitle']}>Онлайн-тренировки для занятий дома</p>
+          </div>
+          <Button className={styles['courses-page__login-button']}>Войти</Button>
+        </header>
+
+        <div className={styles['courses-page__hero']}>
+          <h1 className={styles['courses-page__title']} id="courses-page-title">
+            Начните заниматься спортом
+            <br />и улучшите качество жизни
+          </h1>
+          <p className={styles['courses-page__bubble']}>
+            Измени своё
+            <br />
+            тело за полгода!
+          </p>
+        </div>
+
+        <div className={styles['courses-page__grid']} aria-label="Список курсов">
+          {courseMockItems.map((course) => (
+            <CourseCard key={course.id} course={course} />
+          ))}
+        </div>
+
+        <footer className={styles['courses-page__footer']}>
+          <Button
+            aria-label="Вернуться к началу страницы"
+            className={styles['courses-page__scroll-button']}
+            onClick={handleScrollTop}
+          >
+            Наверх ↑
+          </Button>
+        </footer>
+      </Container>
     </section>
   )
 }

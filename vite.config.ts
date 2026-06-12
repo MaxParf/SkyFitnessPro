@@ -7,6 +7,11 @@ export default defineConfig({
   build: {
     outDir: 'dist',
   },
+  css: {
+    modules: {
+      generateScopedName: '[name]__[local]___[hash:base64:5]',
+    },
+  },
   resolve: {
     alias: {
       '@app': fileURLToPath(new URL('./src/app', import.meta.url)),
@@ -16,6 +21,7 @@ export default defineConfig({
       '@entities': fileURLToPath(new URL('./src/entities', import.meta.url)),
       '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
       '@assets': fileURLToPath(new URL('./src/shared/assets', import.meta.url)),
+      '@image': fileURLToPath(new URL('./src/image', import.meta.url)),
     },
   },
   plugins: [react()],

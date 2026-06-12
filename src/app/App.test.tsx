@@ -11,8 +11,8 @@ describe('App', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('banner')).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Основная навигация' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Курсы' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Начните заниматься спортом/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('article')).toHaveLength(5)
+    expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument()
   })
 })
