@@ -1,7 +1,10 @@
+import { useCallback, useState } from 'react'
+
 import logoIcon from '@image/Logo.svg'
 import skyFitnessLogo from '@image/SkyFitnessPro.svg'
 import { courseMockItems } from '@entities/course/model/course.mock'
 import { CourseCard } from '@entities/course/ui/CourseCard'
+import { LoginModal } from '@features/auth/ui/LoginModal'
 import { Button } from '@shared/ui/Button'
 import { Container } from '@shared/ui/Container'
 import { Icon } from '@shared/ui/Icon'
@@ -9,9 +12,19 @@ import { Icon } from '@shared/ui/Icon'
 import styles from './CoursesPage.module.scss'
 
 export function CoursesPage() {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+
   const handleScrollTop = (): void => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  const handleLoginModalOpen = (): void => {
+    setIsLoginModalOpen(true)
+  }
+
+  const handleLoginModalClose = useCallback((): void => {
+    setIsLoginModalOpen(false)
+  }, [])
 
   return (
     <section className={styles['courses-page']} aria-labelledby="courses-page-title">
@@ -33,7 +46,9 @@ export function CoursesPage() {
             </a>
             <p className={styles['courses-page__subtitle']}>Онлайн-тренировки для занятий дома</p>
           </div>
-          <Button className={styles['courses-page__login-button']}>Войти</Button>
+          <Button className={styles['courses-page__login-button']} onClick={handleLoginModalOpen}>
+            Войти
+          </Button>
         </header>
 
         <div className={styles['courses-page__hero']}>
@@ -64,6 +79,7 @@ export function CoursesPage() {
           </Button>
         </footer>
       </Container>
+      {isLoginModalOpen ? <LoginModal onClose={handleLoginModalClose} /> : null}
     </section>
   )
 }
