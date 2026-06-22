@@ -113,18 +113,65 @@
   display: flex;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1199px) {
   .course-card {
-    height: auto;
-    min-height: auto;
+    width: 100%;
   }
 
   .course-card__image-wrapper {
-    height: 260px;
-    flex-basis: 260px;
+    height: auto;
+    aspect-ratio: 360 / 325;
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .course-card {
+    gap: 0;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: auto;
+    padding-bottom: 15px;
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .course-card__image-wrapper {
+    height: 325px;
+    aspect-ratio: auto;
+    flex-basis: 325px;
   }
 
   .course-card__image {
     height: 100%;
+  }
+
+  .course-card__content {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: calc(100% - 43px);
+    gap: 20px;
+    padding: 0;
+    margin: 15px 21.5px;
+  }
+
+  .course-card__title {
+    width: 300px;
+    max-width: 100%;
+    color: var(--color-black);
+    font-size: 24px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.1;
+  }
+
+  .course-card__meta-list {
+    width: 272px;
+    max-width: 100%;
+    gap: 6px;
+  }
+
+  .course-card__meta-item:nth-child(3) {
+    flex-basis: 100%;
   }
 }

@@ -15,3 +15,11 @@
   line-height: var(--line-height-base);
   white-space: nowrap;
 }
+
+@media (max-width: 767px) {
+  .meta-badge {
+    min-height: 38px;
+    padding: 10px;
+    border-radius: 50px;
+  }
+}
