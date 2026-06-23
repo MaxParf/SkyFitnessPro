@@ -1,8 +1,9 @@
 import { z } from 'zod'
 
-export const duplicateEmail = 'sergey.petrov96@mail.ru'
-
 export const duplicateEmailErrorMessage = 'Данная почта уже используется. Попробуйте войти.'
+
+const specialCharactersPattern = /[^A-Za-zА-Яа-яЁё0-9]/g
+const uppercaseLetterPattern = /[A-ZА-ЯЁ]/
 
 export const registerSchema = z
   .object({
@@ -10,7 +11,13 @@ export const registerSchema = z
     password: z
       .string()
       .min(1, 'Введите пароль')
-      .min(6, 'Пароль должен содержать не менее 6 символов'),
+      .min(6, 'Пароль должен содержать не менее 6 символов')
+      .refine((password) => uppercaseLetterPattern.test(password), {
+        message: 'Пароль должен содержать минимум одну заглавную букву',
+      })
+      .refine((password) => (password.match(specialCharactersPattern) ?? []).length >= 2, {
+        message: 'Пароль должен содержать минимум два специальных символа',
+      }),
     repeatPassword: z.string().min(1, 'Повторите пароль'),
   })
   .refine((data) => data.password === data.repeatPassword, {

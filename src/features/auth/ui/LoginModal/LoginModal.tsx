@@ -5,8 +5,10 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 import { Button } from '@shared/ui/Button'
+import { FitnessApiError } from '@shared/api/fitnessApi'
 import { Icon } from '@shared/ui/Icon'
 
+import { loginUser, registerUser } from '../../api/auth.service'
 import type { AuthModalMode } from '../../model/auth-modal.types'
 import {
   loginPasswordErrorMessage,
@@ -14,14 +16,11 @@ import {
   type LoginFormValues,
 } from '../../model/login.schema'
 import {
-  duplicateEmail,
   duplicateEmailErrorMessage,
   registerSchema,
   type RegisterFormValues,
 } from '../../model/register.schema'
 import styles from './LoginModal.module.scss'
-
-const demoPassword = 'skypro123'
 
 export type LoginModalProps = {
   onClose: () => void
@@ -29,6 +28,10 @@ export type LoginModalProps = {
 
 export function LoginModal({ onClose }: LoginModalProps) {
   const [mode, setMode] = useState<AuthModalMode>('login')
+  const [loginFormError, setLoginFormError] = useState('')
+  const [loginSuccessMessage, setLoginSuccessMessage] = useState('')
+  const [registerFormError, setRegisterFormError] = useState('')
+  const [registerSuccessMessage, setRegisterSuccessMessage] = useState('')
   const titleId = useId()
   const loginInputId = useId()
   const loginPasswordInputId = useId()
@@ -43,7 +46,7 @@ export function LoginModal({ onClose }: LoginModalProps) {
   const firstInputRef = useRef<HTMLInputElement | null>(null)
 
   const {
-    formState: { errors: loginErrors },
+    formState: { errors: loginErrors, isSubmitting: isLoginSubmitting },
     handleSubmit: handleLoginSubmit,
     register: registerLoginField,
     reset: resetLoginForm,
@@ -54,7 +57,7 @@ export function LoginModal({ onClose }: LoginModalProps) {
   })
 
   const {
-    formState: { errors: registerErrors },
+    formState: { errors: registerErrors, isSubmitting: isRegisterSubmitting },
     handleSubmit: handleRegisterSubmit,
     register: registerRegisterField,
     reset: resetRegisterForm,
@@ -88,27 +91,71 @@ export function LoginModal({ onClose }: LoginModalProps) {
     }
   }, [onClose])
 
-  const handleLoginValidSubmit = (values: LoginFormValues): void => {
-    if (values.password !== demoPassword) {
-      setLoginError('password', {
-        message: loginPasswordErrorMessage,
-        type: 'validate',
+  const handleLoginValidSubmit = async (values: LoginFormValues): Promise<void> => {
+    setLoginFormError('')
+    setLoginSuccessMessage('')
+
+    try {
+      await loginUser({
+        email: values.login,
+        password: values.password,
       })
+
+      setLoginSuccessMessage('Вход выполнен успешно!')
+    } catch (error) {
+      const message =
+        error instanceof FitnessApiError && error.hasServerMessage
+          ? error.message
+          : 'Не удалось войти. Попробуйте позже.'
+
+      if (message === 'Неверный пароль' || message === 'Пользователь с таким email не найден') {
+        setLoginError('password', {
+          message: loginPasswordErrorMessage,
+          type: 'validate',
+        })
+        return
+      }
+
+      setLoginFormError(message)
     }
   }
 
-  const handleRegisterValidSubmit = (values: RegisterFormValues): void => {
-    if (values.email.trim().toLowerCase() === duplicateEmail) {
-      setRegisterError('email', {
-        message: duplicateEmailErrorMessage,
-        type: 'validate',
+  const handleRegisterValidSubmit = async (values: RegisterFormValues): Promise<void> => {
+    setRegisterFormError('')
+    setRegisterSuccessMessage('')
+
+    try {
+      const response = await registerUser({
+        email: values.email,
+        password: values.password,
       })
+
+      setRegisterSuccessMessage(response.message)
+    } catch (error) {
+      const message =
+        error instanceof FitnessApiError && error.hasServerMessage
+          ? error.message
+          : 'Не удалось зарегистрироваться. Попробуйте позже.'
+
+      if (message === 'Пользователь с таким email уже существует') {
+        setRegisterError('email', {
+          message: duplicateEmailErrorMessage,
+          type: 'validate',
+        })
+        return
+      }
+
+      setRegisterFormError(message)
     }
   }
 
   const handleModeChange = (nextMode: AuthModalMode): void => {
     resetLoginForm()
     resetRegisterForm()
+    setLoginFormError('')
+    setLoginSuccessMessage('')
+    setRegisterFormError('')
+    setRegisterSuccessMessage('')
     setMode(nextMode)
   }
 
@@ -140,15 +187,15 @@ export function LoginModal({ onClose }: LoginModalProps) {
             <div className={styles['login-modal__fields']}>
               <div className={styles['login-modal__field']}>
                 <label className={styles['login-modal__label']} htmlFor={loginInputId}>
-                  Логин
+                  Эл. почта
                 </label>
                 <input
                   aria-describedby={loginErrors.login ? loginErrorId : undefined}
                   aria-invalid={Boolean(loginErrors.login)}
                   className={styles['login-modal__input']}
                   id={loginInputId}
-                  placeholder="Логин"
-                  type="text"
+                  placeholder="Эл. почта"
+                  type="email"
                   {...loginFieldProps}
                   ref={(element) => {
                     loginFieldRef(element)
@@ -192,7 +239,11 @@ export function LoginModal({ onClose }: LoginModalProps) {
             </div>
 
             <div className={styles['login-modal__actions']}>
-              <Button className={styles['login-modal__submit']} type="submit">
+              <Button
+                className={styles['login-modal__submit']}
+                disabled={isLoginSubmitting}
+                type="submit"
+              >
                 Войти
               </Button>
               <Button
@@ -204,6 +255,16 @@ export function LoginModal({ onClose }: LoginModalProps) {
                 Зарегистрироваться
               </Button>
             </div>
+            {loginSuccessMessage ? (
+              <p className={styles['login-modal__success']} role="status">
+                {loginSuccessMessage}
+              </p>
+            ) : null}
+            {loginFormError ? (
+              <p className={styles['login-modal__form-error']} role="alert">
+                {loginFormError}
+              </p>
+            ) : null}
           </form>
         ) : (
           <form
@@ -288,7 +349,11 @@ export function LoginModal({ onClose }: LoginModalProps) {
             </div>
 
             <div className={styles['login-modal__actions']}>
-              <Button className={styles['login-modal__submit']} type="submit">
+              <Button
+                className={styles['login-modal__submit']}
+                disabled={isRegisterSubmitting}
+                type="submit"
+              >
                 Зарегистрироваться
               </Button>
               <Button
@@ -300,6 +365,16 @@ export function LoginModal({ onClose }: LoginModalProps) {
                 Войти
               </Button>
             </div>
+            {registerSuccessMessage ? (
+              <p className={styles['login-modal__success']} role="status">
+                {registerSuccessMessage}
+              </p>
+            ) : null}
+            {registerFormError ? (
+              <p className={styles['login-modal__form-error']} role="alert">
+                {registerFormError}
+              </p>
+            ) : null}
           </form>
         )}
       </section>

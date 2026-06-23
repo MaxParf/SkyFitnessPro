@@ -110,6 +110,23 @@
   text-align: center;
 }
 
+.login-modal__success,
+.login-modal__form-error {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.1;
+  text-align: center;
+}
+
+.login-modal__success {
+  color: var(--color-text-dark);
+}
+
+.login-modal__form-error {
+  color: #db0030;
+}
+
 .login-modal__submit,
 .login-modal__register-button {
   width: 100%;

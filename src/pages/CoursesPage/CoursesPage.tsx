@@ -1,18 +1,45 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import logoIcon from '@image/Logo.svg'
 import skyFitnessLogo from '@image/SkyFitnessPro.svg'
-import { courseMockItems } from '@entities/course/model/course.mock'
+import { loadCourses } from '@entities/course/api/course.service'
+import type { Course } from '@entities/course/model/course.types'
 import { CourseCard } from '@entities/course/ui/CourseCard'
 import { LoginModal } from '@features/auth/ui/LoginModal'
 import { Button } from '@shared/ui/Button'
 import { Container } from '@shared/ui/Container'
+import { EmptyState } from '@shared/ui/EmptyState/EmptyState'
+import { ErrorState } from '@shared/ui/ErrorState/ErrorState'
 import { Icon } from '@shared/ui/Icon'
+import { Loader } from '@shared/ui/Loader/Loader'
 
 import styles from './CoursesPage.module.scss'
 
 export function CoursesPage() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [courses, setCourses] = useState<Course[]>([])
+  const [coursesStatus, setCoursesStatus] = useState<'empty' | 'error' | 'loading' | 'success'>(
+    'loading',
+  )
+
+  useEffect(() => {
+    const abortController = new AbortController()
+
+    loadCourses(abortController.signal)
+      .then((loadedCourses) => {
+        setCourses(loadedCourses)
+        setCoursesStatus(loadedCourses.length > 0 ? 'success' : 'empty')
+      })
+      .catch(() => {
+        if (!abortController.signal.aborted) {
+          setCoursesStatus('error')
+        }
+      })
+
+    return () => {
+      abortController.abort()
+    }
+  }, [])
 
   const handleScrollTop = (): void => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -63,11 +90,34 @@ export function CoursesPage() {
           </p>
         </div>
 
-        <div className={styles['courses-page__grid']} aria-label="Список курсов">
-          {courseMockItems.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </div>
+        {coursesStatus === 'loading' ? (
+          <div className={styles['courses-page__state']}>
+            <Loader />
+          </div>
+        ) : null}
+
+        {coursesStatus === 'error' ? (
+          <div className={styles['courses-page__state']}>
+            <ErrorState
+              title="Не удалось загрузить курсы"
+              description="Проверьте подключение и попробуйте обновить страницу."
+            />
+          </div>
+        ) : null}
+
+        {coursesStatus === 'empty' ? (
+          <div className={styles['courses-page__state']}>
+            <EmptyState title="Курсы пока не добавлены" />
+          </div>
+        ) : null}
+
+        {coursesStatus === 'success' ? (
+          <div className={styles['courses-page__grid']} aria-label="Список курсов">
+            {courses.map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
+        ) : null}
 
         <footer className={styles['courses-page__footer']}>
           <Button
