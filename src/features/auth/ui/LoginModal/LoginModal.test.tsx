@@ -468,4 +468,105 @@ describe('LoginModal', () => {
     ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument()
   })
+
+  it('adds course to profile after plus button click', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          email: 'ivan@example.com',
+          selectedCourses: [],
+        }),
+      )
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Курс успешно добавлен!' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp('ivan@example.com')
+
+    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(4)
+    })
+    expect(fetchMock.mock.calls[3]?.[0]).toBe(
+      'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses',
+    )
+    expect(fetchMock.mock.calls[3]?.[1]).toMatchObject({
+      body: JSON.stringify({ courseId: 'ab1c3f' }),
+      headers: { Authorization: 'Bearer jwt-token' },
+      method: 'POST',
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(screen.getByRole('button', { name: 'Мой профиль' }))
+
+    expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
+  })
+
+  it('removes course from profile after minus button click', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          email: 'ivan@example.com',
+          selectedCourses: ['ab1c3f'],
+        }),
+      )
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Курс успешно удален!' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp('ivan@example.com')
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(3)
+    })
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(screen.getByRole('button', { name: 'Мой профиль' }))
+
+    expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Удалить курс Йога' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Йога' })).not.toBeInTheDocument()
+    })
+    expect(screen.getByText('У вас пока нет приобретённых курсов.')).toBeInTheDocument()
+    expect(fetchMock.mock.calls[3]?.[0]).toBe(
+      'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses/ab1c3f',
+    )
+    expect(fetchMock.mock.calls[3]?.[1]).toMatchObject({
+      headers: { Authorization: 'Bearer jwt-token' },
+      method: 'DELETE',
+    })
+  })
+
+  it('keeps profile page stable when API profile response has no selected courses', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          email: 'ivan@example.com',
+        }),
+      )
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp('ivan@example.com')
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(3)
+    })
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(screen.getByRole('button', { name: 'Мой профиль' }))
+
+    expect(await screen.findByText('У вас пока нет приобретённых курсов.')).toBeInTheDocument()
+  })
 })

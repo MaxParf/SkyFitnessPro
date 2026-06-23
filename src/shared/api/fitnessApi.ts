@@ -4,8 +4,9 @@ const fitnessApiBaseUrl = 'https://webdev-hw-api.herokuapp.com/api/fitness'
 
 type RequestOptions = {
   body?: object
-  method?: 'GET' | 'POST'
+  method?: 'DELETE' | 'GET' | 'POST'
   signal?: AbortSignal
+  token?: string
 }
 
 export class FitnessApiError extends Error {
@@ -26,6 +27,7 @@ export async function requestFitnessApi<TResponse>(
 ): Promise<TResponse> {
   const response = await fetch(`${fitnessApiBaseUrl}${endpoint}`, {
     body: options.body ? JSON.stringify(options.body) : undefined,
+    headers: options.token ? { Authorization: `Bearer ${options.token}` } : undefined,
     method: options.method ?? 'GET',
     signal: options.signal,
   })

@@ -33,6 +33,7 @@ describe('course.service', () => {
       'https://webdev-hw-api.herokuapp.com/api/fitness/courses',
       {
         body: undefined,
+        headers: undefined,
         method: 'GET',
         signal: undefined,
       },

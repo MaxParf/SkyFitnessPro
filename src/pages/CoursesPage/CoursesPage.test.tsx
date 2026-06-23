@@ -22,7 +22,13 @@ const courseDtoItems: CourseDto[] = [
 function renderCoursesPage(authSession: AuthSession | null = null) {
   return render(
     <MemoryRouter>
-      <CoursesPage authSession={authSession} onLoginSuccess={jest.fn()} onLogout={jest.fn()} />
+      <CoursesPage
+        authSession={authSession}
+        onAddCourse={jest.fn()}
+        onLoginSuccess={jest.fn()}
+        onLogout={jest.fn()}
+        selectedCourseIds={[]}
+      />
     </MemoryRouter>,
   )
 }

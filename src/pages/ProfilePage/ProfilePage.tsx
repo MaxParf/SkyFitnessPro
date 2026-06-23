@@ -2,6 +2,9 @@ import circleIcon from '@image/circle.svg'
 import semicircleIcon from '@image/semicircle.svg'
 import { useNavigate } from 'react-router-dom'
 
+import { courseMockItems } from '@entities/course/model/course.mock'
+import type { CourseId } from '@entities/course/model/course.types'
+import { ProfileCourseCard } from '@entities/course/ui/ProfileCourseCard'
 import type { AuthSession } from '@features/auth/model/auth-session.types'
 import { Button } from '@shared/ui/Button'
 import { Container } from '@shared/ui/Container'
@@ -12,9 +15,22 @@ import styles from './ProfilePage.module.scss'
 export type ProfilePageProps = {
   authSession: AuthSession | null
   onLogout: () => void
+  onRemoveCourse: (courseId: CourseId) => void
+  selectedCourseIds: CourseId[]
 }
 
-export function ProfilePage({ authSession, onLogout }: ProfilePageProps) {
+const profileCourseProgressById: Record<CourseId, number> = {
+  ab1c3f: 40,
+  kfpq8e: 0,
+  ypox9r: 100,
+}
+
+export function ProfilePage({
+  authSession,
+  onLogout,
+  onRemoveCourse,
+  selectedCourseIds = [],
+}: ProfilePageProps) {
   const navigate = useNavigate()
   const userName = authSession?.displayName || authSession?.email.split('@')[0] || ''
 
@@ -46,6 +62,13 @@ export function ProfilePage({ authSession, onLogout }: ProfilePageProps) {
       </section>
     )
   }
+
+  const profileCourseItems = courseMockItems
+    .filter((course) => selectedCourseIds.includes(course.id))
+    .map((course) => ({
+      course,
+      progressPercent: profileCourseProgressById[course.id] ?? 0,
+    }))
 
   return (
     <section className={styles['profile-page']} aria-labelledby="profile-page-title">
@@ -95,9 +118,20 @@ export function ProfilePage({ authSession, onLogout }: ProfilePageProps) {
             </h2>
           </div>
           <div className={styles['profile-page__courses-grid']}>
-            <div className={styles['profile-page__empty']}>
-              <EmptyState title="У вас пока нет приобретённых курсов." />
-            </div>
+            {profileCourseItems.length > 0 ? (
+              profileCourseItems.map(({ course, progressPercent }) => (
+                <ProfileCourseCard
+                  course={course}
+                  key={course.id}
+                  onRemoveClick={onRemoveCourse}
+                  progressPercent={progressPercent}
+                />
+              ))
+            ) : (
+              <div className={styles['profile-page__empty']}>
+                <EmptyState title="У вас пока нет приобретённых курсов." />
+              </div>
+            )}
           </div>
         </section>
       </Container>

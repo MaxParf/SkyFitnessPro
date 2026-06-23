@@ -72,7 +72,7 @@
 
 .profile-page__avatar-semicircle {
   top: 125.09px;
-  left: -7.17px;
+  left: 0;
   width: 211.35px;
   height: 72.4px;
 }
@@ -158,6 +158,7 @@
   width: 100%;
   min-height: 649px;
   gap: 40px;
+  grid-template-columns: repeat(3, minmax(0, 360px));
 }
 
 .profile-page__empty {
@@ -221,5 +222,6 @@
 
   .profile-page__courses-grid {
     min-height: 280px;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

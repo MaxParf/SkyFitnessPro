@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import logoIcon from '@image/Logo.svg'
 import skyFitnessLogo from '@image/SkyFitnessPro.svg'
 import { loadCourses } from '@entities/course/api/course.service'
-import type { Course } from '@entities/course/model/course.types'
+import type { Course, CourseId } from '@entities/course/model/course.types'
 import { CourseCard } from '@entities/course/ui/CourseCard'
 import type { AuthSession } from '@features/auth/model/auth-session.types'
 import { LoginModal } from '@features/auth/ui/LoginModal'
@@ -21,11 +21,18 @@ import styles from './CoursesPage.module.scss'
 
 export type CoursesPageProps = {
   authSession: AuthSession | null
+  onAddCourse: (courseId: CourseId) => void
   onLoginSuccess: (session: AuthSession) => void
   onLogout: () => void
+  selectedCourseIds: CourseId[]
 }
 
-export function CoursesPage({ authSession, onLoginSuccess, onLogout }: CoursesPageProps) {
+export function CoursesPage({
+  authSession,
+  onAddCourse,
+  onLoginSuccess,
+  onLogout,
+}: CoursesPageProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [courses, setCourses] = useState<Course[]>([])
@@ -182,7 +189,7 @@ export function CoursesPage({ authSession, onLoginSuccess, onLogout }: CoursesPa
         {coursesStatus === 'success' ? (
           <div className={styles['courses-page__grid']} aria-label="Список курсов">
             {courses.map((course) => (
-              <CourseCard key={course.id} course={course} />
+              <CourseCard key={course.id} course={course} onAddClick={onAddCourse} />
             ))}
           </div>
         ) : null}
