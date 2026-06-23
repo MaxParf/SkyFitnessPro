@@ -4,7 +4,13 @@ import userEvent from '@testing-library/user-event'
 import { CoursesPage } from '@pages/CoursesPage/CoursesPage'
 
 import { LoginModal } from './LoginModal'
-import { mockFetchError, mockFetchResponse, mockFetchSuccess } from '../../../../test/fetchMock'
+import type { LoginModalProps } from './LoginModal'
+import {
+  createJsonResponse,
+  mockFetchError,
+  mockFetchResponse,
+  mockFetchSuccess,
+} from '../../../../test/fetchMock'
 
 const courseDtoItems = [
   {
@@ -17,6 +23,10 @@ const courseDtoItems = [
     workouts: [],
   },
 ]
+
+function renderLoginModal(props?: Partial<LoginModalProps>) {
+  return render(<LoginModal onClose={jest.fn()} onLoginSuccess={jest.fn()} {...props} />)
+}
 
 describe('LoginModal', () => {
   beforeEach(() => {
@@ -38,7 +48,7 @@ describe('LoginModal', () => {
   })
 
   it('renders login form fields and actions', () => {
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     expect(screen.getByLabelText('Эл. почта')).toBeInTheDocument()
     expect(screen.getByLabelText('Пароль')).toBeInTheDocument()
@@ -49,7 +59,7 @@ describe('LoginModal', () => {
   it('shows validation errors after empty login submit', async () => {
     const user = userEvent.setup()
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Войти' }))
 
@@ -60,7 +70,7 @@ describe('LoginModal', () => {
   it('shows two-line password error after wrong login password', async () => {
     const user = userEvent.setup()
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     mockFetchResponse({ message: 'Неверный пароль' }, 404)
 
@@ -75,17 +85,24 @@ describe('LoginModal', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows success message after successful login', async () => {
+  it('passes auth session after successful login', async () => {
     const user = userEvent.setup()
     const fetchMock = mockFetchSuccess({ token: 'jwt-token' })
+    const handleLoginSuccess = jest.fn()
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal({ onLoginSuccess: handleLoginSuccess })
 
     await user.type(screen.getByLabelText('Эл. почта'), 'new.user@mail.ru')
     await user.type(screen.getByLabelText('Пароль'), 'Secure!!')
     await user.click(screen.getByRole('button', { name: 'Войти' }))
 
-    expect(await screen.findByText('Вход выполнен успешно!')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(handleLoginSuccess).toHaveBeenCalledWith({
+        displayName: 'new.user',
+        email: 'new.user@mail.ru',
+        token: 'jwt-token',
+      })
+    })
     expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(
       JSON.stringify({
         email: 'new.user@mail.ru',
@@ -98,7 +115,7 @@ describe('LoginModal', () => {
     const user = userEvent.setup()
     mockFetchResponse({ message: 'Пользователь с таким email не найден' }, 404)
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.type(screen.getByLabelText('Эл. почта'), 'missing.user@mail.ru')
     await user.type(screen.getByLabelText('Пароль'), 'Secure!!')
@@ -119,7 +136,7 @@ describe('LoginModal', () => {
       .mockReturnValue(new Promise<Response>(() => undefined))
     Object.assign(globalThis, { fetch: fetchMock })
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.type(screen.getByLabelText('Эл. почта'), 'new.user@mail.ru')
     await user.type(screen.getByLabelText('Пароль'), 'Secure!!')
@@ -132,7 +149,7 @@ describe('LoginModal', () => {
   it('switches to sign in mode after clicking register button', async () => {
     const user = userEvent.setup()
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
 
@@ -145,7 +162,7 @@ describe('LoginModal', () => {
   it('shows registration password mismatch error', async () => {
     const user = userEvent.setup()
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
     await user.type(screen.getByLabelText('Эл. почта'), 'new.user@mail.ru')
@@ -160,7 +177,7 @@ describe('LoginModal', () => {
     const user = userEvent.setup()
     const fetchMock = mockFetchSuccess({ message: 'Регистрация прошла успешно!' })
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
     await user.type(screen.getByLabelText('Эл. почта'), 'new.user@mail.ru')
@@ -181,7 +198,7 @@ describe('LoginModal', () => {
     const user = userEvent.setup()
     mockFetchResponse({ message: 'Пользователь с таким email уже существует' }, 400)
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
     await user.type(screen.getByLabelText('Эл. почта'), 'sergey.petrov96@mail.ru')
@@ -201,7 +218,7 @@ describe('LoginModal', () => {
     const user = userEvent.setup()
     mockFetchResponse({ message: 'Пароль должен содержать минимум 2 специальных символа' }, 400)
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
     await user.type(screen.getByLabelText('Эл. почта'), 'new.user@mail.ru')
@@ -218,7 +235,7 @@ describe('LoginModal', () => {
     const user = userEvent.setup()
     mockFetchError(new Error('Network error'))
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
     await user.type(screen.getByLabelText('Эл. почта'), 'new.user@mail.ru')
@@ -238,7 +255,7 @@ describe('LoginModal', () => {
       .mockReturnValue(new Promise<Response>(() => undefined))
     Object.assign(globalThis, { fetch: fetchMock })
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
     await user.type(screen.getByLabelText('Эл. почта'), 'new.user@mail.ru')
@@ -254,7 +271,7 @@ describe('LoginModal', () => {
     const user = userEvent.setup()
     const fetchMock = mockFetchSuccess({ message: 'Регистрация прошла успешно!' })
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
     await user.type(screen.getByLabelText('Эл. почта'), 'new.user@mail.ru')
@@ -271,7 +288,7 @@ describe('LoginModal', () => {
   it('returns to login mode after clicking login button in sign in mode', async () => {
     const user = userEvent.setup()
 
-    render(<LoginModal onClose={jest.fn()} />)
+    renderLoginModal()
 
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }))
     await user.click(screen.getByRole('button', { name: 'Войти' }))
@@ -284,7 +301,7 @@ describe('LoginModal', () => {
     const user = userEvent.setup()
     const handleClose = jest.fn()
 
-    render(<LoginModal onClose={handleClose} />)
+    renderLoginModal({ onClose: handleClose })
 
     await user.keyboard('{Escape}')
 
@@ -294,7 +311,7 @@ describe('LoginModal', () => {
   it('closes after clicking backdrop', async () => {
     const user = userEvent.setup()
     const handleClose = jest.fn()
-    const { container } = render(<LoginModal onClose={handleClose} />)
+    const { container } = renderLoginModal({ onClose: handleClose })
     const backdrop = container.querySelector('.login-modal')
 
     expect(backdrop).not.toBeNull()
@@ -306,5 +323,48 @@ describe('LoginModal', () => {
     await waitFor(() => {
       expect(handleClose).toHaveBeenCalledTimes(1)
     })
+  })
+
+  it('closes modal and renders profile trigger after successful login on courses page', async () => {
+    const user = userEvent.setup()
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    render(<CoursesPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Войти' }))
+    await user.type(screen.getByLabelText('Эл. почта'), 'ivan@example.com')
+    await user.type(screen.getByLabelText('Пароль'), 'Secure!!')
+    await user.click(screen.getAllByRole('button', { name: 'Войти' })[1])
+
+    expect(await screen.findByText('ivan')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Открыть меню пользователя' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Войти' })).not.toBeInTheDocument()
+  })
+
+  it('keeps modal open and login button state after failed login on courses page', async () => {
+    const user = userEvent.setup()
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Неверный пароль' }, 404))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    render(<CoursesPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Войти' }))
+    await user.type(screen.getByLabelText('Эл. почта'), 'ivan@example.com')
+    await user.type(screen.getByLabelText('Пароль'), 'wrong-password')
+    await user.click(screen.getAllByRole('button', { name: 'Войти' })[1])
+
+    expect(await screen.findByRole('dialog', { name: 'Вход в SkyFitnessPro' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Открыть меню пользователя' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Войти' }).length).toBeGreaterThan(0)
   })
 })

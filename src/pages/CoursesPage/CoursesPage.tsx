@@ -5,7 +5,9 @@ import skyFitnessLogo from '@image/SkyFitnessPro.svg'
 import { loadCourses } from '@entities/course/api/course.service'
 import type { Course } from '@entities/course/model/course.types'
 import { CourseCard } from '@entities/course/ui/CourseCard'
+import type { AuthSession } from '@features/auth/model/auth-session.types'
 import { LoginModal } from '@features/auth/ui/LoginModal'
+import { UserProfileTrigger } from '@features/auth/ui/UserProfileTrigger'
 import { Button } from '@shared/ui/Button'
 import { Container } from '@shared/ui/Container'
 import { EmptyState } from '@shared/ui/EmptyState/EmptyState'
@@ -17,6 +19,7 @@ import styles from './CoursesPage.module.scss'
 
 export function CoursesPage() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [authSession, setAuthSession] = useState<AuthSession | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [coursesStatus, setCoursesStatus] = useState<'empty' | 'error' | 'loading' | 'success'>(
     'loading',
@@ -53,6 +56,11 @@ export function CoursesPage() {
     setIsLoginModalOpen(false)
   }, [])
 
+  const handleLoginSuccess = useCallback((session: AuthSession): void => {
+    setAuthSession(session)
+    setIsLoginModalOpen(false)
+  }, [])
+
   return (
     <section className={styles['courses-page']} aria-labelledby="courses-page-title">
       <Container className={styles['courses-page__container']}>
@@ -73,9 +81,13 @@ export function CoursesPage() {
             </a>
             <p className={styles['courses-page__subtitle']}>Онлайн-тренировки для занятий дома</p>
           </div>
-          <Button className={styles['courses-page__login-button']} onClick={handleLoginModalOpen}>
-            Войти
-          </Button>
+          {authSession ? (
+            <UserProfileTrigger userName={authSession.displayName} />
+          ) : (
+            <Button className={styles['courses-page__login-button']} onClick={handleLoginModalOpen}>
+              Войти
+            </Button>
+          )}
         </header>
 
         <div className={styles['courses-page__hero']}>
@@ -129,7 +141,9 @@ export function CoursesPage() {
           </Button>
         </footer>
       </Container>
-      {isLoginModalOpen ? <LoginModal onClose={handleLoginModalClose} /> : null}
+      {isLoginModalOpen ? (
+        <LoginModal onClose={handleLoginModalClose} onLoginSuccess={handleLoginSuccess} />
+      ) : null}
     </section>
   )
 }

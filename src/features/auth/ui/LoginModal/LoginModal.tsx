@@ -9,6 +9,7 @@ import { FitnessApiError } from '@shared/api/fitnessApi'
 import { Icon } from '@shared/ui/Icon'
 
 import { loginUser, registerUser } from '../../api/auth.service'
+import type { AuthSession } from '../../model/auth-session.types'
 import type { AuthModalMode } from '../../model/auth-modal.types'
 import {
   loginPasswordErrorMessage,
@@ -24,12 +25,12 @@ import styles from './LoginModal.module.scss'
 
 export type LoginModalProps = {
   onClose: () => void
+  onLoginSuccess: (session: AuthSession) => void
 }
 
-export function LoginModal({ onClose }: LoginModalProps) {
+export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
   const [mode, setMode] = useState<AuthModalMode>('login')
   const [loginFormError, setLoginFormError] = useState('')
-  const [loginSuccessMessage, setLoginSuccessMessage] = useState('')
   const [registerFormError, setRegisterFormError] = useState('')
   const [registerSuccessMessage, setRegisterSuccessMessage] = useState('')
   const titleId = useId()
@@ -93,15 +94,18 @@ export function LoginModal({ onClose }: LoginModalProps) {
 
   const handleLoginValidSubmit = async (values: LoginFormValues): Promise<void> => {
     setLoginFormError('')
-    setLoginSuccessMessage('')
 
     try {
-      await loginUser({
+      const response = await loginUser({
         email: values.login,
         password: values.password,
       })
 
-      setLoginSuccessMessage('Вход выполнен успешно!')
+      onLoginSuccess({
+        displayName: values.login.split('@')[0],
+        email: values.login,
+        token: response.token,
+      })
     } catch (error) {
       const message =
         error instanceof FitnessApiError && error.hasServerMessage
@@ -153,7 +157,6 @@ export function LoginModal({ onClose }: LoginModalProps) {
     resetLoginForm()
     resetRegisterForm()
     setLoginFormError('')
-    setLoginSuccessMessage('')
     setRegisterFormError('')
     setRegisterSuccessMessage('')
     setMode(nextMode)
@@ -255,11 +258,6 @@ export function LoginModal({ onClose }: LoginModalProps) {
                 Зарегистрироваться
               </Button>
             </div>
-            {loginSuccessMessage ? (
-              <p className={styles['login-modal__success']} role="status">
-                {loginSuccessMessage}
-              </p>
-            ) : null}
             {loginFormError ? (
               <p className={styles['login-modal__form-error']} role="alert">
                 {loginFormError}
