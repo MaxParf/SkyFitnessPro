@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 
+import type { AuthSession } from '@features/auth/model/auth-session.types'
 import type { CourseDto } from '@shared/api/types/course.dto'
 
 import { CoursesPage } from './CoursesPage'
@@ -17,6 +19,14 @@ const courseDtoItems: CourseDto[] = [
   },
 ]
 
+function renderCoursesPage(authSession: AuthSession | null = null) {
+  return render(
+    <MemoryRouter>
+      <CoursesPage authSession={authSession} onLoginSuccess={jest.fn()} onLogout={jest.fn()} />
+    </MemoryRouter>,
+  )
+}
+
 describe('CoursesPage', () => {
   afterEach(() => {
     jest.restoreAllMocks()
@@ -25,7 +35,7 @@ describe('CoursesPage', () => {
   it('renders loading state before courses load', () => {
     mockFetchPending()
 
-    render(<CoursesPage />)
+    renderCoursesPage()
 
     expect(screen.getByRole('status')).toHaveTextContent('Загрузка...')
   })
@@ -33,7 +43,7 @@ describe('CoursesPage', () => {
   it('renders courses after successful loading', async () => {
     mockFetchSuccess(courseDtoItems)
 
-    render(<CoursesPage />)
+    renderCoursesPage()
 
     expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
   })
@@ -41,7 +51,7 @@ describe('CoursesPage', () => {
   it('renders error state when course loading fails', async () => {
     mockFetchError(new Error('Network error'))
 
-    render(<CoursesPage />)
+    renderCoursesPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось загрузить курсы')
   })
@@ -49,7 +59,7 @@ describe('CoursesPage', () => {
   it('renders empty state when API returns no courses', async () => {
     mockFetchSuccess([])
 
-    render(<CoursesPage />)
+    renderCoursesPage()
 
     expect(await screen.findByText('Курсы пока не добавлены')).toBeInTheDocument()
   })

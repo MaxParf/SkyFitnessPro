@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import logoIcon from '@image/Logo.svg'
 import skyFitnessLogo from '@image/SkyFitnessPro.svg'
@@ -7,6 +8,7 @@ import type { Course } from '@entities/course/model/course.types'
 import { CourseCard } from '@entities/course/ui/CourseCard'
 import type { AuthSession } from '@features/auth/model/auth-session.types'
 import { LoginModal } from '@features/auth/ui/LoginModal'
+import { ProfileDropdown } from '@features/auth/ui/ProfileDropdown'
 import { UserProfileTrigger } from '@features/auth/ui/UserProfileTrigger'
 import { Button } from '@shared/ui/Button'
 import { Container } from '@shared/ui/Container'
@@ -17,13 +19,22 @@ import { Loader } from '@shared/ui/Loader/Loader'
 
 import styles from './CoursesPage.module.scss'
 
-export function CoursesPage() {
+export type CoursesPageProps = {
+  authSession: AuthSession | null
+  onLoginSuccess: (session: AuthSession) => void
+  onLogout: () => void
+}
+
+export function CoursesPage({ authSession, onLoginSuccess, onLogout }: CoursesPageProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [authSession, setAuthSession] = useState<AuthSession | null>(null)
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [courses, setCourses] = useState<Course[]>([])
   const [coursesStatus, setCoursesStatus] = useState<'empty' | 'error' | 'loading' | 'success'>(
     'loading',
   )
+  const navigate = useNavigate()
+  const profileDropdownId = useId()
+  const profileTriggerRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -56,10 +67,31 @@ export function CoursesPage() {
     setIsLoginModalOpen(false)
   }, [])
 
-  const handleLoginSuccess = useCallback((session: AuthSession): void => {
-    setAuthSession(session)
-    setIsLoginModalOpen(false)
+  const handleLoginSuccess = useCallback(
+    (session: AuthSession): void => {
+      onLoginSuccess(session)
+      setIsLoginModalOpen(false)
+    },
+    [onLoginSuccess],
+  )
+
+  const handleProfileDropdownToggle = (): void => {
+    setIsProfileDropdownOpen((isOpen) => !isOpen)
+  }
+
+  const handleProfileDropdownClose = useCallback((): void => {
+    setIsProfileDropdownOpen(false)
   }, [])
+
+  const handleProfileClick = (): void => {
+    setIsProfileDropdownOpen(false)
+    navigate('/profile')
+  }
+
+  const handleLogout = (): void => {
+    onLogout()
+    setIsProfileDropdownOpen(false)
+  }
 
   return (
     <section className={styles['courses-page']} aria-labelledby="courses-page-title">
@@ -81,13 +113,37 @@ export function CoursesPage() {
             </a>
             <p className={styles['courses-page__subtitle']}>Онлайн-тренировки для занятий дома</p>
           </div>
-          {authSession ? (
-            <UserProfileTrigger userName={authSession.displayName} />
-          ) : (
-            <Button className={styles['courses-page__login-button']} onClick={handleLoginModalOpen}>
-              Войти
-            </Button>
-          )}
+          <div className={styles['courses-page__auth']}>
+            {authSession ? (
+              <>
+                <UserProfileTrigger
+                  aria-controls={isProfileDropdownOpen ? profileDropdownId : undefined}
+                  aria-expanded={isProfileDropdownOpen}
+                  onClick={handleProfileDropdownToggle}
+                  ref={profileTriggerRef}
+                  userName={authSession.displayName}
+                />
+                {isProfileDropdownOpen ? (
+                  <ProfileDropdown
+                    className={styles['courses-page__profile-dropdown']}
+                    id={profileDropdownId}
+                    onClose={handleProfileDropdownClose}
+                    onLogout={handleLogout}
+                    onProfileClick={handleProfileClick}
+                    session={authSession}
+                    triggerRef={profileTriggerRef}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <Button
+                className={styles['courses-page__login-button']}
+                onClick={handleLoginModalOpen}
+              >
+                Войти
+              </Button>
+            )}
+          </div>
         </header>
 
         <div className={styles['courses-page__hero']}>

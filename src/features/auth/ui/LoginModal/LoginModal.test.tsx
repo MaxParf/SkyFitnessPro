@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 
-import { CoursesPage } from '@pages/CoursesPage/CoursesPage'
+import App from '@app/App'
 
 import { LoginModal } from './LoginModal'
 import type { LoginModalProps } from './LoginModal'
@@ -28,6 +29,27 @@ function renderLoginModal(props?: Partial<LoginModalProps>) {
   return render(<LoginModal onClose={jest.fn()} onLoginSuccess={jest.fn()} {...props} />)
 }
 
+function renderApp() {
+  return render(
+    <MemoryRouter>
+      <App />
+    </MemoryRouter>,
+  )
+}
+
+async function loginThroughApp(email = 'ivan@example.com') {
+  const user = userEvent.setup()
+
+  await user.click(screen.getByRole('button', { name: 'Войти' }))
+  await user.type(screen.getByLabelText('Эл. почта'), email)
+  await user.type(screen.getByLabelText('Пароль'), 'Secure!!')
+  await user.click(screen.getAllByRole('button', { name: 'Войти' })[1])
+
+  await screen.findByRole('button', { name: 'Открыть меню пользователя' })
+
+  return user
+}
+
 describe('LoginModal', () => {
   beforeEach(() => {
     mockFetchSuccess(courseDtoItems)
@@ -40,7 +62,7 @@ describe('LoginModal', () => {
   it('opens after clicking login button on courses page', async () => {
     const user = userEvent.setup()
 
-    render(<CoursesPage />)
+    renderApp()
 
     await user.click(screen.getByRole('button', { name: 'Войти' }))
 
@@ -326,19 +348,14 @@ describe('LoginModal', () => {
   })
 
   it('closes modal and renders profile trigger after successful login on courses page', async () => {
-    const user = userEvent.setup()
     const fetchMock = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
       .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
       .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
     Object.assign(globalThis, { fetch: fetchMock })
 
-    render(<CoursesPage />)
-
-    await user.click(screen.getByRole('button', { name: 'Войти' }))
-    await user.type(screen.getByLabelText('Эл. почта'), 'ivan@example.com')
-    await user.type(screen.getByLabelText('Пароль'), 'Secure!!')
-    await user.click(screen.getAllByRole('button', { name: 'Войти' })[1])
+    renderApp()
+    await loginThroughApp('ivan@example.com')
 
     expect(await screen.findByText('ivan')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -354,7 +371,7 @@ describe('LoginModal', () => {
       .mockResolvedValueOnce(createJsonResponse({ message: 'Неверный пароль' }, 404))
     Object.assign(globalThis, { fetch: fetchMock })
 
-    render(<CoursesPage />)
+    renderApp()
 
     await user.click(screen.getByRole('button', { name: 'Войти' }))
     await user.type(screen.getByLabelText('Эл. почта'), 'ivan@example.com')
@@ -366,5 +383,89 @@ describe('LoginModal', () => {
       screen.queryByRole('button', { name: 'Открыть меню пользователя' }),
     ).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Войти' }).length).toBeGreaterThan(0)
+  })
+
+  it('opens profile dropdown after clicking profile trigger', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp('ivan@example.com')
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+
+    expect(screen.getByRole('dialog', { name: 'ivan' })).toBeInTheDocument()
+    expect(screen.getByText('ivan@example.com')).toBeInTheDocument()
+  })
+
+  it('closes profile dropdown after outside click', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp()
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(document.body)
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'ivan' })).not.toBeInTheDocument()
+    })
+  })
+
+  it('closes profile dropdown after Escape', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp()
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'ivan' })).not.toBeInTheDocument()
+    })
+  })
+
+  it('navigates to profile after clicking profile dropdown action', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp('ivan@example.com')
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(screen.getByRole('button', { name: 'Мой профиль' }))
+
+    expect(await screen.findByRole('heading', { name: 'Профиль' })).toBeInTheDocument()
+    expect(screen.getByText('Логин: ivan')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'ivan' })).not.toBeInTheDocument()
+  })
+
+  it('logs out from profile dropdown and restores login button', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp()
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(screen.getByRole('button', { name: 'Выйти' }))
+
+    expect(
+      screen.queryByRole('button', { name: 'Открыть меню пользователя' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument()
   })
 })

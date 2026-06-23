@@ -59,6 +59,19 @@
   padding: 0;
 }
 
+.courses-page__auth {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.courses-page__profile-dropdown {
+  position: absolute;
+  z-index: 10;
+  top: 74px;
+  right: 0;
+}
+
 .courses-page__hero {
   position: relative;
   display: grid;
@@ -215,6 +228,12 @@
     padding: 8px 16px;
   }
 
+  .courses-page__profile-dropdown {
+    position: fixed;
+    top: 92px;
+    right: 16px;
+  }
+
   .courses-page__hero {
     grid-template-columns: minmax(0, 1fr);
     padding-inline: 16px;
@@ -264,6 +283,10 @@
   }
 
   .courses-page__login-button {
+    align-self: flex-start;
+  }
+
+  .courses-page__auth {
     align-self: flex-start;
   }
 }

@@ -1,13 +1,225 @@
-@use '@shared/styles/mixins' as *;
-
-.page {
-  @include page-layout;
+.profile-page {
+  min-height: 1559px;
+  padding: 145px 0 280px;
+  background: #fafafa;
 }
 
-.page__title {
-  margin: 0;
+.profile-page__container {
+  display: flex;
+  width: 100%;
+  max-width: 1160px;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 75px;
 }
 
-.page__text {
+.profile-page__section {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.profile-page__title {
+  width: 810px;
+  max-width: 100%;
+  min-height: 44px;
   margin: 0;
+  color: #000000;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.profile-page__card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 30px;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 4px 67px -12px rgb(0 0 0 / 13%);
+}
+
+.profile-page__user-layout {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 33px;
+}
+
+.profile-page__avatar {
+  position: relative;
+  width: 197px;
+  height: 197px;
+  flex: 0 0 197px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #d9d9d9;
+}
+
+.profile-page__avatar-circle,
+.profile-page__avatar-semicircle {
+  position: absolute;
+  display: block;
+}
+
+.profile-page__avatar-circle {
+  top: 28.56px;
+  left: 61.81px;
+  width: 72.4px;
+  height: 72.19px;
+}
+
+.profile-page__avatar-semicircle {
+  top: 125.09px;
+  left: -7.17px;
+  width: 211.35px;
+  height: 72.4px;
+}
+
+.profile-page__user-content {
+  display: flex;
+  width: 300px;
+  flex-direction: column;
+  gap: 44px;
+}
+
+.profile-page__user-info {
+  display: flex;
+  width: 300px;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.profile-page__name {
+  width: 300px;
+  height: 35px;
+  margin: 0;
+  overflow: hidden;
+  color: #000000;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-page__login,
+.profile-page__text {
+  margin: 0;
+  color: #000000;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.profile-page__text {
+  margin-top: 8px;
+}
+
+.profile-page__login {
+  width: 188px;
+  height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-page__logout {
+  display: flex;
+  width: 192px;
+}
+
+.profile-page__button {
+  width: 192px;
+  min-height: 52px;
+  box-sizing: border-box;
+  padding: 16px 26px;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.profile-page__button--secondary {
+  border: 1px solid #000000;
+}
+
+.profile-page__courses {
+  gap: 40px;
+}
+
+.profile-page__courses-title-block {
+  width: 810px;
+  max-width: 100%;
+}
+
+.profile-page__courses-grid {
+  display: grid;
+  width: 100%;
+  min-height: 649px;
+  gap: 40px;
+}
+
+.profile-page__empty {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+@media (max-width: 767px) {
+  .profile-page {
+    min-height: auto;
+    padding: 40px 0 44px;
+  }
+
+  .profile-page__container {
+    gap: 48px;
+  }
+
+  .profile-page__title {
+    font-size: 32px;
+  }
+
+  .profile-page__card {
+    padding: 24px;
+  }
+
+  .profile-page__user-layout {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-page__avatar {
+    width: 160px;
+    height: 160px;
+    flex-basis: 160px;
+  }
+
+  .profile-page__avatar-circle {
+    top: 23px;
+    left: 50px;
+    width: 58px;
+    height: 58px;
+  }
+
+  .profile-page__avatar-semicircle {
+    top: 102px;
+    left: -6px;
+    width: 172px;
+    height: 59px;
+  }
+
+  .profile-page__user-content,
+  .profile-page__user-info {
+    width: 100%;
+  }
+
+  .profile-page__name {
+    width: 100%;
+  }
+
+  .profile-page__courses-grid {
+    min-height: 280px;
+  }
 }

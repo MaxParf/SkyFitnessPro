@@ -1,10 +1,106 @@
+import circleIcon from '@image/circle.svg'
+import semicircleIcon from '@image/semicircle.svg'
+import { useNavigate } from 'react-router-dom'
+
+import type { AuthSession } from '@features/auth/model/auth-session.types'
+import { Button } from '@shared/ui/Button'
+import { Container } from '@shared/ui/Container'
+import { EmptyState } from '@shared/ui/EmptyState/EmptyState'
+
 import styles from './ProfilePage.module.scss'
 
-export function ProfilePage() {
+export type ProfilePageProps = {
+  authSession: AuthSession | null
+  onLogout: () => void
+}
+
+export function ProfilePage({ authSession, onLogout }: ProfilePageProps) {
+  const navigate = useNavigate()
+  const userName = authSession?.displayName || authSession?.email.split('@')[0] || ''
+
+  const handleCoursesClick = (): void => {
+    navigate('/')
+  }
+
+  const handleLogout = (): void => {
+    onLogout()
+    navigate('/')
+  }
+
+  if (!authSession) {
+    return (
+      <section className={styles['profile-page']} aria-labelledby="profile-page-title">
+        <Container className={styles['profile-page__container']}>
+          <div className={styles['profile-page__empty']}>
+            <h1 className={styles['profile-page__title']} id="profile-page-title">
+              Профиль
+            </h1>
+            <p className={styles['profile-page__text']}>
+              Войдите, чтобы посмотреть данные профиля и приобретённые курсы.
+            </p>
+            <Button className={styles['profile-page__button']} onClick={handleCoursesClick}>
+              На главную
+            </Button>
+          </div>
+        </Container>
+      </section>
+    )
+  }
+
   return (
-    <section className={styles.page}>
-      <h1 className={styles.page__title}>Профиль</h1>
-      <p className={styles.page__text}>Личный кабинет пользователя будет реализован позже.</p>
+    <section className={styles['profile-page']} aria-labelledby="profile-page-title">
+      <Container className={styles['profile-page__container']}>
+        <section className={styles['profile-page__section']} aria-labelledby="profile-page-title">
+          <h1 className={styles['profile-page__title']} id="profile-page-title">
+            Профиль
+          </h1>
+
+          <article className={styles['profile-page__card']}>
+            <div className={styles['profile-page__user-layout']}>
+              <div className={styles['profile-page__avatar']} aria-hidden="true">
+                <img alt="" className={styles['profile-page__avatar-circle']} src={circleIcon} />
+                <img
+                  alt=""
+                  className={styles['profile-page__avatar-semicircle']}
+                  src={semicircleIcon}
+                />
+              </div>
+
+              <div className={styles['profile-page__user-content']}>
+                <div className={styles['profile-page__user-info']}>
+                  <p className={styles['profile-page__name']}>{userName}</p>
+                  <p className={styles['profile-page__login']}>Логин: {userName}</p>
+                </div>
+                <div className={styles['profile-page__logout']}>
+                  <Button
+                    className={`${styles['profile-page__button']} ${styles['profile-page__button--secondary']}`}
+                    onClick={handleLogout}
+                    variant="secondary"
+                  >
+                    Выйти
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section
+          className={`${styles['profile-page__section']} ${styles['profile-page__courses']}`}
+          aria-labelledby="profile-courses-title"
+        >
+          <div className={styles['profile-page__courses-title-block']}>
+            <h2 className={styles['profile-page__title']} id="profile-courses-title">
+              Мои курсы
+            </h2>
+          </div>
+          <div className={styles['profile-page__courses-grid']}>
+            <div className={styles['profile-page__empty']}>
+              <EmptyState title="У вас пока нет приобретённых курсов." />
+            </div>
+          </div>
+        </section>
+      </Container>
     </section>
   )
 }
