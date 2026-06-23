@@ -21,7 +21,7 @@ import styles from './CoursesPage.module.scss'
 
 export type CoursesPageProps = {
   authSession: AuthSession | null
-  onAddCourse: (courseId: CourseId) => void
+  onAddCourse: (courseId: CourseId) => Promise<void>
   onLoginSuccess: (session: AuthSession) => void
   onLogout: () => void
   selectedCourseIds: CourseId[]
@@ -32,6 +32,7 @@ export function CoursesPage({
   onAddCourse,
   onLoginSuccess,
   onLogout,
+  selectedCourseIds,
 }: CoursesPageProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
@@ -98,6 +99,23 @@ export function CoursesPage({
   const handleLogout = (): void => {
     onLogout()
     setIsProfileDropdownOpen(false)
+  }
+
+  const handleAddCourse = async (courseId: CourseId): Promise<void> => {
+    if (!authSession) {
+      setIsLoginModalOpen(true)
+      return
+    }
+
+    if (selectedCourseIds.includes(courseId)) {
+      return
+    }
+
+    try {
+      await onAddCourse(courseId)
+    } catch {
+      return
+    }
   }
 
   return (
@@ -189,7 +207,7 @@ export function CoursesPage({
         {coursesStatus === 'success' ? (
           <div className={styles['courses-page__grid']} aria-label="Список курсов">
             {courses.map((course) => (
-              <CourseCard key={course.id} course={course} onAddClick={onAddCourse} />
+              <CourseCard key={course.id} course={course} onAddClick={handleAddCourse} />
             ))}
           </div>
         ) : null}

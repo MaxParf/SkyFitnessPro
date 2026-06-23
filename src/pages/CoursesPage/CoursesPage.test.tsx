@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 
 import type { AuthSession } from '@features/auth/model/auth-session.types'
@@ -19,15 +20,26 @@ const courseDtoItems: CourseDto[] = [
   },
 ]
 
-function renderCoursesPage(authSession: AuthSession | null = null) {
+const authSession: AuthSession = {
+  displayName: 'ivan',
+  email: 'ivan@example.com',
+  token: 'jwt-token',
+  username: 'ivan',
+}
+
+function renderCoursesPage(
+  session: AuthSession | null = null,
+  onAddCourse = jest.fn<Promise<void>, [string]>(),
+  selectedCourseIds: string[] = [],
+) {
   return render(
     <MemoryRouter>
       <CoursesPage
-        authSession={authSession}
-        onAddCourse={jest.fn()}
+        authSession={session}
+        onAddCourse={onAddCourse}
         onLoginSuccess={jest.fn()}
         onLogout={jest.fn()}
-        selectedCourseIds={[]}
+        selectedCourseIds={selectedCourseIds}
       />
     </MemoryRouter>,
   )
@@ -68,5 +80,34 @@ describe('CoursesPage', () => {
     renderCoursesPage()
 
     expect(await screen.findByText('Курсы пока не добавлены')).toBeInTheDocument()
+  })
+
+  it('does not call add API when course is already selected', async () => {
+    const user = userEvent.setup()
+    const handleAddCourse = jest.fn<Promise<void>, [string]>()
+    mockFetchSuccess(courseDtoItems)
+
+    renderCoursesPage(authSession, handleAddCourse, ['ab1c3f'])
+
+    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+
+    expect(handleAddCourse).not.toHaveBeenCalled()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('keeps courses visible when add course API fails', async () => {
+    const user = userEvent.setup()
+    const handleAddCourse = jest
+      .fn<Promise<void>, [string]>()
+      .mockRejectedValue(new Error('API error'))
+    mockFetchSuccess(courseDtoItems)
+
+    renderCoursesPage(authSession, handleAddCourse)
+
+    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+
+    expect(handleAddCourse).toHaveBeenCalledWith('ab1c3f')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Йога' })).toBeInTheDocument()
   })
 })

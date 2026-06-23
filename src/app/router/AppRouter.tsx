@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
 import {
@@ -7,6 +7,12 @@ import {
   removeUserCourse,
 } from '@entities/course/api/user-course.service'
 import type { CourseId } from '@entities/course/model/course.types'
+import { FitnessApiError } from '@shared/api/fitnessApi'
+import {
+  clearAuthSession,
+  loadAuthSession,
+  saveAuthSession,
+} from '@features/auth/model/auth-session.storage'
 import type { AuthSession } from '@features/auth/model/auth-session.types'
 import { AuthPage } from '@pages/AuthPage/AuthPage'
 import { CoursePage } from '@pages/CoursePage/CoursePage'
@@ -18,38 +24,63 @@ import { WorkoutPage } from '@pages/WorkoutPage/WorkoutPage'
 import { AppRoutes } from './routes'
 
 export function AppRouter() {
-  const [authSession, setAuthSession] = useState<AuthSession | null>(null)
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => loadAuthSession())
   const [selectedCourseIds, setSelectedCourseIds] = useState<CourseId[]>([])
 
-  const handleLoginSuccess = useCallback((session: AuthSession): void => {
-    setAuthSession(session)
-    void loadUserProfile(session.token)
-      .then((profile) => {
-        setSelectedCourseIds(Array.isArray(profile.selectedCourses) ? profile.selectedCourses : [])
-      })
-      .catch(() => {
-        setSelectedCourseIds([])
-      })
-  }, [])
-
-  const handleLogout = useCallback((): void => {
+  const clearSession = useCallback((): void => {
+    clearAuthSession()
     setAuthSession(null)
     setSelectedCourseIds([])
   }, [])
 
+  const restoreSelectedCourses = useCallback(
+    (session: AuthSession): void => {
+      void loadUserProfile(session.token)
+        .then((profile) => {
+          const restoredCourseIds = Array.isArray(profile.selectedCourses)
+            ? profile.selectedCourses
+            : []
+
+          setSelectedCourseIds((currentIds) =>
+            Array.from(new Set([...currentIds, ...restoredCourseIds])),
+          )
+        })
+        .catch((error) => {
+          setSelectedCourseIds([])
+
+          if (error instanceof FitnessApiError && (error.status === 401 || error.status === 403)) {
+            clearSession()
+          }
+        })
+    },
+    [clearSession],
+  )
+
+  useEffect(() => {
+    if (authSession) {
+      restoreSelectedCourses(authSession)
+    }
+  }, [authSession, restoreSelectedCourses])
+
+  const handleLoginSuccess = useCallback((session: AuthSession): void => {
+    saveAuthSession(session)
+    setAuthSession(session)
+  }, [])
+
+  const handleLogout = useCallback((): void => {
+    clearSession()
+  }, [clearSession])
+
   const handleAddCourse = useCallback(
-    (courseId: CourseId): void => {
+    async (courseId: CourseId): Promise<void> => {
       if (!authSession) {
         return
       }
 
-      void addUserCourse(authSession.token, courseId)
-        .then(() => {
-          setSelectedCourseIds((currentIds) =>
-            currentIds.includes(courseId) ? currentIds : [...currentIds, courseId],
-          )
-        })
-        .catch(() => undefined)
+      await addUserCourse(authSession.token, courseId)
+      setSelectedCourseIds((currentIds) =>
+        currentIds.includes(courseId) ? currentIds : [...currentIds, courseId],
+      )
     },
     [authSession],
   )

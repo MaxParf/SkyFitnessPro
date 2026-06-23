@@ -25,13 +25,34 @@ const courseDtoItems = [
   },
 ]
 
+function createUserProfileResponse(email: string, selectedCourses?: string[]) {
+  return {
+    user: {
+      email,
+      selectedCourses,
+    },
+  }
+}
+
+function createDeferredResponse(body: object | null) {
+  let resolveResponse: (response: Response) => void = () => undefined
+  const responsePromise = new Promise<Response>((resolve) => {
+    resolveResponse = resolve
+  })
+
+  return {
+    resolve: () => resolveResponse(createJsonResponse(body)),
+    responsePromise,
+  }
+}
+
 function renderLoginModal(props?: Partial<LoginModalProps>) {
   return render(<LoginModal onClose={jest.fn()} onLoginSuccess={jest.fn()} {...props} />)
 }
 
-function renderApp() {
+function renderApp(initialEntries = ['/']) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={initialEntries}>
       <App />
     </MemoryRouter>,
   )
@@ -52,10 +73,12 @@ async function loginThroughApp(email = 'ivan@example.com') {
 
 describe('LoginModal', () => {
   beforeEach(() => {
+    window.localStorage.clear()
     mockFetchSuccess(courseDtoItems)
   })
 
   afterEach(() => {
+    window.localStorage.clear()
     jest.restoreAllMocks()
   })
 
@@ -123,6 +146,7 @@ describe('LoginModal', () => {
         displayName: 'new.user',
         email: 'new.user@mail.ru',
         token: 'jwt-token',
+        username: 'new.user',
       })
     })
     expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(
@@ -361,6 +385,13 @@ describe('LoginModal', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Открыть меню пользователя' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Войти' })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem('skyfitnesspro.auth')).toBe(
+      JSON.stringify({
+        email: 'ivan@example.com',
+        token: 'jwt-token',
+        username: 'ivan',
+      }),
+    )
   })
 
   it('keeps modal open and login button state after failed login on courses page', async () => {
@@ -383,6 +414,81 @@ describe('LoginModal', () => {
       screen.queryByRole('button', { name: 'Открыть меню пользователя' }),
     ).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Войти' }).length).toBeGreaterThan(0)
+  })
+
+  it('restores authenticated header and selected courses from localStorage', async () => {
+    window.localStorage.setItem(
+      'skyfitnesspro.auth',
+      JSON.stringify({
+        email: 'ivan@example.com',
+        token: 'restored-token',
+        username: 'ivan',
+      }),
+    )
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(
+        createJsonResponse(createUserProfileResponse('ivan@example.com', ['ab1c3f'])),
+      )
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = userEvent.setup()
+
+    expect(
+      await screen.findByRole('button', { name: 'Открыть меню пользователя' }),
+    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://webdev-hw-api.herokuapp.com/api/fitness/users/me',
+        expect.objectContaining({
+          headers: { Authorization: 'Bearer restored-token' },
+        }),
+      )
+    })
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(screen.getByRole('button', { name: 'Мой профиль' }))
+
+    expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
+  })
+
+  it('does not send add request for course restored from user profile', async () => {
+    window.localStorage.setItem(
+      'skyfitnesspro.auth',
+      JSON.stringify({
+        email: 'ivan@example.com',
+        token: 'restored-token',
+        username: 'ivan',
+      }),
+    )
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(
+        createJsonResponse(createUserProfileResponse('ivan@example.com', ['ab1c3f'])),
+      )
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = userEvent.setup()
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+    })
+    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('clears broken localStorage JSON and stays unauthenticated', async () => {
+    window.localStorage.setItem('skyfitnesspro.auth', '{broken-json')
+    mockFetchSuccess(courseDtoItems)
+
+    renderApp()
+
+    expect(window.localStorage.getItem('skyfitnesspro.auth')).toBeNull()
+    expect(await screen.findByRole('button', { name: 'Войти' })).toBeInTheDocument()
   })
 
   it('opens profile dropdown after clicking profile trigger', async () => {
@@ -467,6 +573,31 @@ describe('LoginModal', () => {
       screen.queryByRole('button', { name: 'Открыть меню пользователя' }),
     ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument()
+    expect(window.localStorage.getItem('skyfitnesspro.auth')).toBeNull()
+  })
+
+  it('clears localStorage after profile page logout', async () => {
+    window.localStorage.setItem(
+      'skyfitnesspro.auth',
+      JSON.stringify({
+        email: 'ivan@example.com',
+        token: 'restored-token',
+        username: 'ivan',
+      }),
+    )
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(createUserProfileResponse('ivan@example.com', [])))
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp(['/profile'])
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Выйти' }))
+
+    expect(window.localStorage.getItem('skyfitnesspro.auth')).toBeNull()
+    expect(await screen.findByRole('button', { name: 'Войти' })).toBeInTheDocument()
   })
 
   it('adds course to profile after plus button click', async () => {
@@ -474,12 +605,7 @@ describe('LoginModal', () => {
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
       .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
       .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
-      .mockResolvedValueOnce(
-        createJsonResponse({
-          email: 'ivan@example.com',
-          selectedCourses: [],
-        }),
-      )
+      .mockResolvedValueOnce(createJsonResponse(createUserProfileResponse('ivan@example.com', [])))
       .mockResolvedValueOnce(createJsonResponse({ message: 'Курс успешно добавлен!' }))
     Object.assign(globalThis, { fetch: fetchMock })
 
@@ -506,16 +632,70 @@ describe('LoginModal', () => {
     expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
   })
 
+  it('keeps added course when initial profile restore resolves after add request', async () => {
+    const deferredProfile = createDeferredResponse(
+      createUserProfileResponse('ivan@example.com', []),
+    )
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
+      .mockReturnValueOnce(deferredProfile.responsePromise)
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Курс успешно добавлен!' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = await loginThroughApp('ivan@example.com')
+
+    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(4)
+    })
+
+    deferredProfile.resolve()
+
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(screen.getByRole('button', { name: 'Мой профиль' }))
+
+    expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
+  })
+
+  it('adds course with token restored from localStorage', async () => {
+    window.localStorage.setItem(
+      'skyfitnesspro.auth',
+      JSON.stringify({
+        email: 'ivan@example.com',
+        token: 'restored-token',
+        username: 'ivan',
+      }),
+    )
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(createJsonResponse(createUserProfileResponse('ivan@example.com', [])))
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Курс успешно добавлен!' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({
+        headers: { Authorization: 'Bearer restored-token' },
+        method: 'POST',
+      })
+    })
+  })
+
   it('removes course from profile after minus button click', async () => {
     const fetchMock = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
       .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
       .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
       .mockResolvedValueOnce(
-        createJsonResponse({
-          email: 'ivan@example.com',
-          selectedCourses: ['ab1c3f'],
-        }),
+        createJsonResponse(createUserProfileResponse('ivan@example.com', ['ab1c3f'])),
       )
       .mockResolvedValueOnce(createJsonResponse({ message: 'Курс успешно удален!' }))
     Object.assign(globalThis, { fetch: fetchMock })
@@ -551,11 +731,7 @@ describe('LoginModal', () => {
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
       .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
       .mockResolvedValueOnce(createJsonResponse({ token: 'jwt-token' }))
-      .mockResolvedValueOnce(
-        createJsonResponse({
-          email: 'ivan@example.com',
-        }),
-      )
+      .mockResolvedValueOnce(createJsonResponse(createUserProfileResponse('ivan@example.com')))
     Object.assign(globalThis, { fetch: fetchMock })
 
     renderApp()

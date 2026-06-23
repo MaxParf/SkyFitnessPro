@@ -1,12 +1,21 @@
 import { requestFitnessApi } from '@shared/api/fitnessApi'
-import type { UserCourseMutationResponseDto, UserProfileDto } from '@shared/api/types/user.dto'
+import type {
+  UserCourseMutationResponseDto,
+  UserProfileDto,
+  UserProfileResponseDto,
+} from '@shared/api/types/user.dto'
 
 import type { CourseId } from '../model/course.types'
 
 export function loadUserProfile(token: string): Promise<UserProfileDto> {
-  return requestFitnessApi<UserProfileDto>('/users/me', {
+  return requestFitnessApi<UserProfileResponseDto>('/users/me', {
     token,
-  })
+  }).then((profileResponse) => ({
+    email: profileResponse.user?.email ?? '',
+    selectedCourses: Array.isArray(profileResponse.user?.selectedCourses)
+      ? profileResponse.user.selectedCourses
+      : [],
+  }))
 }
 
 export function addUserCourse(

@@ -8,8 +8,10 @@ describe('user-course.service', () => {
 
   it('loads user profile with bearer token', async () => {
     const fetchMock = mockFetchSuccess({
-      email: 'ivan@example.com',
-      selectedCourses: ['ab1c3f'],
+      user: {
+        email: 'ivan@example.com',
+        selectedCourses: ['ab1c3f'],
+      },
     })
 
     await expect(loadUserProfile('jwt-token')).resolves.toEqual({
@@ -25,6 +27,19 @@ describe('user-course.service', () => {
         signal: undefined,
       },
     )
+  })
+
+  it('normalizes missing selected courses from user profile response', async () => {
+    mockFetchSuccess({
+      user: {
+        email: 'ivan@example.com',
+      },
+    })
+
+    await expect(loadUserProfile('jwt-token')).resolves.toEqual({
+      email: 'ivan@example.com',
+      selectedCourses: [],
+    })
   })
 
   it('adds user course with bearer token', async () => {

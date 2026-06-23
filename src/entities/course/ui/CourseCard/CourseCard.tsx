@@ -19,7 +19,7 @@ const imageVariantClassNames: Record<CourseImageVariant, string> = {
 
 export type CourseCardProps = {
   course: Course
-  onAddClick?: (courseId: CourseId) => void
+  onAddClick?: (courseId: CourseId) => Promise<void> | void
 }
 
 export function CourseCard({ course, onAddClick }: CourseCardProps) {

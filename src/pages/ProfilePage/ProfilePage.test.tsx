@@ -11,6 +11,7 @@ const authSession: AuthSession = {
   displayName: 'ivan',
   email: 'ivan@example.com',
   token: 'jwt-token',
+  username: 'ivan',
 }
 
 function LocationView() {

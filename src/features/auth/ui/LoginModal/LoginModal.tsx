@@ -100,11 +100,13 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
         email: values.login,
         password: values.password,
       })
+      const username = values.login.split('@')[0]
 
       onLoginSuccess({
-        displayName: values.login.split('@')[0],
+        displayName: username,
         email: values.login,
         token: response.token,
+        username,
       })
     } catch (error) {
       const message =
