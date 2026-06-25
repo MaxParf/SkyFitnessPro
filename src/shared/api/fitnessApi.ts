@@ -4,7 +4,7 @@ const fitnessApiBaseUrl = 'https://webdev-hw-api.herokuapp.com/api/fitness'
 
 type RequestOptions = {
   body?: object
-  method?: 'DELETE' | 'GET' | 'POST'
+  method?: 'DELETE' | 'GET' | 'PATCH' | 'POST'
   signal?: AbortSignal
   token?: string
 }

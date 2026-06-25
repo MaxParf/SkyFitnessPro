@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
@@ -6,6 +6,7 @@ import type { CourseId } from '@entities/course/model/course.types'
 import type { AuthSession } from '@features/auth/model/auth-session.types'
 
 import { ProfilePage } from './ProfilePage'
+import { mockFetchPending, mockFetchSuccess } from '../../test/fetchMock'
 
 const authSession: AuthSession = {
   displayName: 'ivan',
@@ -24,6 +25,7 @@ function renderProfilePage(
   session: AuthSession | null = authSession,
   onLogout = jest.fn(),
   selectedCourseIds: CourseId[] = ['ab1c3f', 'kfpq8e', 'ypox9r'],
+  onRemoveCourse = jest.fn(),
 ) {
   return render(
     <MemoryRouter initialEntries={['/profile']}>
@@ -33,13 +35,19 @@ function renderProfilePage(
           element={
             <ProfilePage
               authSession={session}
+              isProfileDropdownOpen={false}
+              onLoginClick={jest.fn()}
               onLogout={onLogout}
-              onRemoveCourse={jest.fn()}
+              onProfileClick={jest.fn()}
+              onProfileDropdownClose={jest.fn()}
+              onProfileNavigate={jest.fn()}
+              onRemoveCourse={onRemoveCourse}
               selectedCourseIds={selectedCourseIds}
             />
           }
         />
         <Route path="/" element={<LocationView />} />
+        <Route path="/workouts/:workoutId" element={<LocationView />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -51,7 +59,7 @@ describe('ProfilePage', () => {
 
     expect(screen.getByRole('heading', { name: 'Профиль' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Мои курсы' })).toBeInTheDocument()
-    expect(screen.getByText('ivan')).toBeInTheDocument()
+    expect(screen.getAllByText('ivan')).toHaveLength(2)
     expect(screen.getByText('Логин: ivan')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Йога' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Стретчинг' })).toBeInTheDocument()
@@ -84,5 +92,60 @@ describe('ProfilePage', () => {
 
     expect(handleLogout).toHaveBeenCalledTimes(1)
     expect(screen.getByTestId('location')).toHaveTextContent('/')
+  })
+
+  it('opens workout selection modal when selected course card is clicked', async () => {
+    const user = userEvent.setup()
+    mockFetchSuccess([
+      {
+        _id: 'workout-1',
+        exercises: [],
+        name: 'Утренняя практика',
+        video: 'https://www.youtube.com/embed/video1',
+      },
+    ])
+
+    renderProfilePage(authSession, jest.fn(), ['ab1c3f'])
+
+    await user.click(screen.getByRole('button', { name: 'Открыть тренировки курса Йога' }))
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Выберите тренировку' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Утренняя практика/ })).toBeInTheDocument()
+  })
+
+  it('does not open workout modal when remove button is clicked', async () => {
+    const user = userEvent.setup()
+    const handleRemoveCourse = jest.fn()
+    const fetchMock = mockFetchPending()
+
+    renderProfilePage(authSession, jest.fn(), ['ab1c3f'], handleRemoveCourse)
+
+    await user.click(screen.getByRole('button', { name: 'Удалить курс Йога' }))
+
+    expect(handleRemoveCourse).toHaveBeenCalledWith('ab1c3f')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('navigates from modal start button to selected workout', async () => {
+    const user = userEvent.setup()
+    mockFetchSuccess([
+      {
+        _id: 'workout-1',
+        exercises: [],
+        name: 'Утренняя практика',
+        video: 'https://www.youtube.com/embed/video1',
+      },
+    ])
+
+    renderProfilePage(authSession, jest.fn(), ['ab1c3f'])
+
+    await user.click(screen.getByRole('button', { name: 'Открыть тренировки курса Йога' }))
+    await user.click(await screen.findByRole('button', { name: 'Начать' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/workouts/workout-1')
+    })
   })
 })

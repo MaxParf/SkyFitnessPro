@@ -1,0 +1,172 @@
+.select-workout-modal {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.select-workout-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(0 0 0 / 35%);
+  cursor: pointer;
+}
+
+.select-workout-modal__dialog {
+  position: relative;
+  display: flex;
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  flex-direction: column;
+  gap: 48px;
+  padding: 40px;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: var(--shadow-card);
+}
+
+.select-workout-modal__title {
+  width: 346px;
+  max-width: 100%;
+  min-height: 35px;
+  margin: 0;
+  color: #000000;
+  font-family: StratosSkyeng, var(--font-main);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.select-workout-modal__content {
+  display: flex;
+  width: 380px;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.select-workout-modal__list {
+  display: flex;
+  width: 354px;
+  max-width: 100%;
+  max-height: 360px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 8px 0 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.select-workout-modal__item {
+  display: flex;
+  width: 354px;
+  max-width: 100%;
+  min-height: 64px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.select-workout-modal__item-button {
+  display: flex;
+  width: 354px;
+  max-width: 100%;
+  min-height: 54px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+  text-align: left;
+}
+
+.select-workout-modal__item-button:focus-visible {
+  border-radius: 8px;
+  outline: 3px solid var(--color-blue-accent);
+  outline-offset: 3px;
+}
+
+.select-workout-modal__checkbox {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  margin: 15px 10px 15px 0;
+}
+
+.select-workout-modal__checkbox-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.select-workout-modal__text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.select-workout-modal__workout-title,
+.select-workout-modal__workout-description {
+  overflow: hidden;
+  color: #000000;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-workout-modal__workout-title {
+  max-width: 320px;
+  min-height: 26px;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.select-workout-modal__workout-description {
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.select-workout-modal__divider {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: #d0cece;
+}
+
+.select-workout-modal__start-button {
+  width: 380px;
+  max-width: 100%;
+  min-height: 52px;
+  padding: 16px 26px;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+@media (max-width: 480px) {
+  .select-workout-modal {
+    padding: 16px;
+  }
+
+  .select-workout-modal__dialog {
+    gap: 32px;
+    padding: 28px 20px;
+  }
+
+  .select-workout-modal__title {
+    font-size: 28px;
+  }
+}

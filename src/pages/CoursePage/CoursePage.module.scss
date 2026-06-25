@@ -2,6 +2,19 @@
 
 .page {
   @include page-layout;
+
+  min-height: 100vh;
+  padding: 24px 0 120px;
+  background: #fafafa;
+}
+
+.page__content {
+  display: flex;
+  width: 1160px;
+  max-width: calc(100% - 48px);
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 auto;
 }
 
 .page__title {

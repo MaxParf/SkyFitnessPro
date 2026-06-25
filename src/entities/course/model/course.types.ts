@@ -10,4 +10,5 @@ export type Course = {
   durationLabel: string
   dailyDurationLabel: string
   difficultyLabel: string
+  workoutIds: string[]
 }

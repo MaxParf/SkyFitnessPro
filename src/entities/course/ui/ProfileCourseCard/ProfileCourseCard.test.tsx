@@ -11,6 +11,7 @@ const course: Course = {
   imageSrc: '/image.jpg',
   imageVariant: 'yoga',
   title: 'Йога',
+  workoutIds: ['workout-1'],
 }
 
 describe('ProfileCourseCard', () => {

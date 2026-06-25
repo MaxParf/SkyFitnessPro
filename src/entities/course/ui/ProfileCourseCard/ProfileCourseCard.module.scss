@@ -9,6 +9,12 @@
   border-radius: var(--radius-card);
   background: #ffffff;
   box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.profile-course-card:focus-visible {
+  outline: 3px solid var(--color-blue-accent);
+  outline-offset: 4px;
 }
 
 .profile-course-card__image-wrapper {

@@ -73,6 +73,7 @@ export function mapCourseDtoToCourse(courseDto: CourseDto): Course {
     imageSrc: presentation.imageSrc,
     imageVariant: presentation.imageVariant,
     title: courseDto.nameRU,
+    workoutIds: courseDto.workouts,
   }
 }
 

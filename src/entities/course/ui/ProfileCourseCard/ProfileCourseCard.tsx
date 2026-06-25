@@ -5,7 +5,7 @@ import signalIcon from '@image/signal.svg'
 import { Button } from '@shared/ui/Button'
 import { Icon } from '@shared/ui/Icon'
 import { MetaBadge } from '@shared/ui/MetaBadge'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
 
 import type { Course, CourseId, CourseImageVariant } from '../../model/course.types'
 import styles from './ProfileCourseCard.module.scss'
@@ -25,6 +25,7 @@ type ProgressStyle = CSSProperties & {
 export type ProfileCourseCardProps = {
   course: Course
   onActionClick?: (courseId: CourseId) => void
+  onCardClick?: (courseId: CourseId) => void
   onRemoveClick?: (courseId: CourseId) => void
   progressPercent: number
 }
@@ -48,6 +49,7 @@ function getActionText(progressPercent: number): string {
 export function ProfileCourseCard({
   course,
   onActionClick,
+  onCardClick,
   onRemoveClick,
   progressPercent,
 }: ProfileCourseCardProps) {
@@ -62,16 +64,36 @@ export function ProfileCourseCard({
     '--profile-course-card-progress': `${progress}%`,
   }
 
-  const handleActionClick = (): void => {
+  const handleCardClick = (): void => {
+    onCardClick?.(course.id)
+  }
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      handleCardClick()
+    }
+  }
+
+  const handleActionClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation()
     onActionClick?.(course.id)
   }
 
-  const handleRemoveClick = (): void => {
+  const handleRemoveClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation()
     onRemoveClick?.(course.id)
   }
 
   return (
-    <article className={styles['profile-course-card']}>
+    <article
+      aria-label={`Открыть тренировки курса ${course.title}`}
+      className={styles['profile-course-card']}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      role="button"
+      tabIndex={0}
+    >
       <div className={styles['profile-course-card__image-wrapper']}>
         <img alt="" className={imageClassName} src={course.imageSrc} />
         <Button

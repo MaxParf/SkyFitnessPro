@@ -36,9 +36,13 @@ function renderCoursesPage(
     <MemoryRouter>
       <CoursesPage
         authSession={session}
+        isProfileDropdownOpen={false}
         onAddCourse={onAddCourse}
-        onLoginSuccess={jest.fn()}
+        onLoginClick={jest.fn()}
         onLogout={jest.fn()}
+        onProfileClick={jest.fn()}
+        onProfileDropdownClose={jest.fn()}
+        onProfileNavigate={jest.fn()}
         selectedCourseIds={selectedCourseIds}
       />
     </MemoryRouter>,

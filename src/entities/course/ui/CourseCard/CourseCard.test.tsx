@@ -11,6 +11,7 @@ const course: Course = {
   durationLabel: '20 дней',
   dailyDurationLabel: '10-30 мин/день',
   difficultyLabel: 'Начальный',
+  workoutIds: ['workout-1'],
 }
 
 describe('CourseCard', () => {
