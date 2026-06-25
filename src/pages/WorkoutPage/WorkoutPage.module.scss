@@ -1,13 +1,232 @@
-@use '@shared/styles/mixins' as *;
-
-.page {
-  @include page-layout;
+.workout-page {
+  min-height: 100vh;
+  padding: 24px 0 120px;
+  background: #fafafa;
 }
 
-.page__title {
-  margin: 0;
+.workout-page__container {
+  display: flex;
+  width: 1160px;
+  max-width: calc(100% - 48px);
+  flex-direction: column;
+  gap: 40px;
+  margin: 0 auto;
 }
 
-.page__text {
+.workout-page__title-block {
+  display: flex;
+  width: 810px;
+  max-width: 100%;
+  min-height: 60px;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.workout-page__title {
   margin: 0;
+  color: #000000;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 60px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.workout-page__video {
+  width: 1160px;
+  max-width: 100%;
+}
+
+.workout-page__video-preview {
+  position: relative;
+  width: 100%;
+  height: 639px;
+  overflow: hidden;
+  border-radius: 30px;
+  background: linear-gradient(135deg, rgb(0 0 0 / 18%), rgb(0 0 0 / 3%)), #d9d9d9;
+}
+
+.workout-page__video-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.workout-page__play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  width: 156px;
+  height: 156px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.workout-page__play-button:focus-visible {
+  outline: 3px solid var(--color-blue-accent);
+  outline-offset: 6px;
+}
+
+.workout-page__play-icon {
+  display: block;
+  width: 156px;
+  height: 156px;
+}
+
+.workout-page__exercises-card {
+  display: flex;
+  width: 1160px;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 24px;
+  padding: 40px;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 4px 67px -12px rgb(0 0 0 / 13%);
+}
+
+.workout-page__exercises-title {
+  margin: 0;
+  color: #000000;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.workout-page__exercises-grid {
+  display: grid;
+  width: 1080px;
+  max-width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 320px));
+  gap: 60px;
+  margin-top: 20px;
+}
+
+.workout-page__exercise-column {
+  display: flex;
+  width: 320px;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.workout-page__exercise {
+  display: flex;
+  width: 320px;
+  max-width: 100%;
+  min-height: 36px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workout-page__exercise-text {
+  overflow: hidden;
+  width: 320px;
+  max-width: 100%;
+  min-height: 20px;
+  margin: 0;
+  color: #000000;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workout-page__exercise-track {
+  width: 320px;
+  max-width: 100%;
+  height: 6px;
+  border-radius: 50px;
+  background: #f7f7f7;
+}
+
+.workout-page__progress-button,
+.workout-page__return-link {
+  display: inline-flex;
+  width: 320px;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 16px 26px;
+  border: 0;
+  border-radius: 46px;
+  background: #bcec30;
+  color: #000000;
+  cursor: pointer;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.workout-page__progress-button:focus-visible,
+.workout-page__return-link:focus-visible {
+  outline: 3px solid var(--color-blue-accent);
+  outline-offset: 4px;
+}
+
+@media (max-width: 1199px) {
+  .workout-page__video-preview {
+    height: auto;
+    aspect-ratio: 1160 / 639;
+  }
+
+  .workout-page__exercises-grid {
+    grid-template-columns: repeat(2, minmax(0, 320px));
+    gap: 32px;
+  }
+}
+
+@media (max-width: 767px) {
+  .workout-page {
+    padding: 72px 0 56px;
+  }
+
+  .workout-page__container {
+    max-width: calc(100% - 32px);
+  }
+
+  .workout-page__title {
+    font-size: 36px;
+  }
+
+  .workout-page__video-preview {
+    border-radius: 20px;
+  }
+
+  .workout-page__play-button,
+  .workout-page__play-icon {
+    width: 96px;
+    height: 96px;
+  }
+
+  .workout-page__exercises-card {
+    padding: 28px 20px;
+    border-radius: 24px;
+  }
+
+  .workout-page__exercises-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 0;
+  }
+
+  .workout-page__exercise-column,
+  .workout-page__progress-button,
+  .workout-page__return-link {
+    width: 100%;
+  }
 }

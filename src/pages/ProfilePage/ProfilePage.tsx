@@ -1,20 +1,28 @@
 import circleIcon from '@image/circle.svg'
 import semicircleIcon from '@image/semicircle.svg'
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 import { courseMockItems } from '@entities/course/model/course.mock'
 import type { CourseId } from '@entities/course/model/course.types'
 import { ProfileCourseCard } from '@entities/course/ui/ProfileCourseCard'
 import type { AuthSession } from '@features/auth/model/auth-session.types'
+import { SelectWorkoutModal } from '@features/workout/ui/SelectWorkoutModal'
 import { Button } from '@shared/ui/Button'
 import { Container } from '@shared/ui/Container'
 import { EmptyState } from '@shared/ui/EmptyState/EmptyState'
+import { AppHeader } from '@widgets/AppHeader'
 
 import styles from './ProfilePage.module.scss'
 
 export type ProfilePageProps = {
   authSession: AuthSession | null
+  isProfileDropdownOpen: boolean
+  onLoginClick: () => void
   onLogout: () => void
+  onProfileClick: () => void
+  onProfileDropdownClose: () => void
+  onProfileNavigate: () => void
   onRemoveCourse: (courseId: CourseId) => void
   selectedCourseIds: CourseId[]
 }
@@ -27,11 +35,17 @@ const profileCourseProgressById: Record<CourseId, number> = {
 
 export function ProfilePage({
   authSession,
+  isProfileDropdownOpen,
+  onLoginClick,
   onLogout,
+  onProfileClick,
+  onProfileDropdownClose,
+  onProfileNavigate,
   onRemoveCourse,
   selectedCourseIds = [],
 }: ProfilePageProps) {
   const navigate = useNavigate()
+  const [selectedWorkoutCourseId, setSelectedWorkoutCourseId] = useState<CourseId | null>(null)
   const userName = authSession?.displayName || authSession?.email.split('@')[0] || ''
 
   const handleCoursesClick = (): void => {
@@ -43,9 +57,26 @@ export function ProfilePage({
     navigate('/')
   }
 
+  const handleOpenWorkouts = (courseId: CourseId): void => {
+    setSelectedWorkoutCourseId(courseId)
+  }
+
+  const handleCloseWorkouts = (): void => {
+    setSelectedWorkoutCourseId(null)
+  }
+
   if (!authSession) {
     return (
       <section className={styles['profile-page']} aria-labelledby="profile-page-title">
+        <AppHeader
+          authSession={authSession}
+          isProfileDropdownOpen={isProfileDropdownOpen}
+          onLoginClick={onLoginClick}
+          onLogout={onLogout}
+          onProfileClick={onProfileClick}
+          onProfileDropdownClose={onProfileDropdownClose}
+          onProfileNavigate={onProfileNavigate}
+        />
         <Container className={styles['profile-page__container']}>
           <div className={styles['profile-page__empty']}>
             <h1 className={styles['profile-page__title']} id="profile-page-title">
@@ -72,6 +103,15 @@ export function ProfilePage({
 
   return (
     <section className={styles['profile-page']} aria-labelledby="profile-page-title">
+      <AppHeader
+        authSession={authSession}
+        isProfileDropdownOpen={isProfileDropdownOpen}
+        onLoginClick={onLoginClick}
+        onLogout={onLogout}
+        onProfileClick={onProfileClick}
+        onProfileDropdownClose={onProfileDropdownClose}
+        onProfileNavigate={onProfileNavigate}
+      />
       <Container className={styles['profile-page__container']}>
         <section className={styles['profile-page__section']} aria-labelledby="profile-page-title">
           <h1 className={styles['profile-page__title']} id="profile-page-title">
@@ -123,6 +163,8 @@ export function ProfilePage({
                 <ProfileCourseCard
                   course={course}
                   key={course.id}
+                  onActionClick={handleOpenWorkouts}
+                  onCardClick={handleOpenWorkouts}
                   onRemoveClick={onRemoveCourse}
                   progressPercent={progressPercent}
                 />
@@ -135,6 +177,15 @@ export function ProfilePage({
           </div>
         </section>
       </Container>
+
+      {selectedWorkoutCourseId ? (
+        <SelectWorkoutModal
+          courseId={selectedWorkoutCourseId}
+          key={selectedWorkoutCourseId}
+          onClose={handleCloseWorkouts}
+          token={authSession.token}
+        />
+      ) : null}
     </section>
   )
 }

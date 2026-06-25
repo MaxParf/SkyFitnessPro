@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useNavigate } from 'react-router-dom'
 
 import {
   addUserCourse,
@@ -14,6 +14,7 @@ import {
   saveAuthSession,
 } from '@features/auth/model/auth-session.storage'
 import type { AuthSession } from '@features/auth/model/auth-session.types'
+import { LoginModal } from '@features/auth/ui/LoginModal'
 import { AuthPage } from '@pages/AuthPage/AuthPage'
 import { CoursePage } from '@pages/CoursePage/CoursePage'
 import { CoursesPage } from '@pages/CoursesPage/CoursesPage'
@@ -24,7 +25,10 @@ import { WorkoutPage } from '@pages/WorkoutPage/WorkoutPage'
 import { AppRoutes } from './routes'
 
 export function AppRouter() {
+  const navigate = useNavigate()
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => loadAuthSession())
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [selectedCourseIds, setSelectedCourseIds] = useState<CourseId[]>([])
 
   const clearSession = useCallback((): void => {
@@ -65,11 +69,34 @@ export function AppRouter() {
   const handleLoginSuccess = useCallback((session: AuthSession): void => {
     saveAuthSession(session)
     setAuthSession(session)
+    setIsLoginModalOpen(false)
   }, [])
 
   const handleLogout = useCallback((): void => {
     clearSession()
+    setIsProfileDropdownOpen(false)
   }, [clearSession])
+
+  const handleLoginModalOpen = useCallback((): void => {
+    setIsLoginModalOpen(true)
+  }, [])
+
+  const handleLoginModalClose = useCallback((): void => {
+    setIsLoginModalOpen(false)
+  }, [])
+
+  const handleProfileDropdownToggle = useCallback((): void => {
+    setIsProfileDropdownOpen((isOpen) => !isOpen)
+  }, [])
+
+  const handleProfileDropdownClose = useCallback((): void => {
+    setIsProfileDropdownOpen(false)
+  }, [])
+
+  const handleProfileNavigate = useCallback((): void => {
+    setIsProfileDropdownOpen(false)
+    navigate(AppRoutes.profile)
+  }, [navigate])
 
   const handleAddCourse = useCallback(
     async (courseId: CourseId): Promise<void> => {
@@ -100,35 +127,47 @@ export function AppRouter() {
     [authSession],
   )
 
+  const appHeaderProps = {
+    authSession,
+    isProfileDropdownOpen,
+    onLoginClick: handleLoginModalOpen,
+    onLogout: handleLogout,
+    onProfileClick: handleProfileDropdownToggle,
+    onProfileDropdownClose: handleProfileDropdownClose,
+    onProfileNavigate: handleProfileNavigate,
+  }
+
   return (
-    <Routes>
-      <Route
-        path={AppRoutes.courses}
-        element={
-          <CoursesPage
-            authSession={authSession}
-            onAddCourse={handleAddCourse}
-            onLoginSuccess={handleLoginSuccess}
-            onLogout={handleLogout}
-            selectedCourseIds={selectedCourseIds}
-          />
-        }
-      />
-      <Route path={AppRoutes.auth} element={<AuthPage />} />
-      <Route path={AppRoutes.course} element={<CoursePage />} />
-      <Route
-        path={AppRoutes.profile}
-        element={
-          <ProfilePage
-            authSession={authSession}
-            onLogout={handleLogout}
-            onRemoveCourse={handleRemoveCourse}
-            selectedCourseIds={selectedCourseIds}
-          />
-        }
-      />
-      <Route path={AppRoutes.workout} element={<WorkoutPage />} />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route
+          path={AppRoutes.courses}
+          element={
+            <CoursesPage
+              {...appHeaderProps}
+              onAddCourse={handleAddCourse}
+              selectedCourseIds={selectedCourseIds}
+            />
+          }
+        />
+        <Route path={AppRoutes.auth} element={<AuthPage />} />
+        <Route path={AppRoutes.course} element={<CoursePage {...appHeaderProps} />} />
+        <Route
+          path={AppRoutes.profile}
+          element={
+            <ProfilePage
+              {...appHeaderProps}
+              onRemoveCourse={handleRemoveCourse}
+              selectedCourseIds={selectedCourseIds}
+            />
+          }
+        />
+        <Route path={AppRoutes.workout} element={<WorkoutPage {...appHeaderProps} />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+      {isLoginModalOpen ? (
+        <LoginModal onClose={handleLoginModalClose} onLoginSuccess={handleLoginSuccess} />
+      ) : null}
+    </>
   )
 }

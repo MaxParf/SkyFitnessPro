@@ -1,0 +1,137 @@
+@use '@shared/styles/mixins' as *;
+
+.app-header {
+  margin-bottom: 74px;
+}
+
+.app-header__container {
+  max-width: 1208px;
+}
+
+.app-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.app-header__brand-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-header__brand {
+  @include focus-visible;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.app-header__logo {
+  width: 29px;
+  height: 20px;
+}
+
+.app-header__brand-text {
+  width: 220px;
+  height: auto;
+}
+
+.app-header__subtitle {
+  margin: 0;
+  color: var(--color-text-dark);
+  font-size: var(--font-size-logo-subtitle);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+}
+
+.app-header__login-button {
+  width: 103px;
+  min-width: 103px;
+  min-height: 52px;
+  padding: 0;
+}
+
+.app-header__auth {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.app-header__profile-dropdown {
+  position: absolute;
+  z-index: 10;
+  top: 74px;
+  right: 0;
+}
+
+@media (max-width: 767px) {
+  .app-header {
+    margin-bottom: 40px;
+  }
+
+  .app-header__container {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .app-header__inner {
+    align-items: flex-start;
+    box-sizing: border-box;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .app-header__brand-group {
+    width: 220px;
+    height: 35px;
+    flex: 0 0 220px;
+    gap: 6px;
+  }
+
+  .app-header__brand {
+    width: 220px;
+    height: 35px;
+  }
+
+  .app-header__brand-text {
+    width: 180px;
+  }
+
+  .app-header__subtitle {
+    display: none;
+  }
+
+  .app-header__login-button {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 83px;
+    height: 36px;
+    min-height: 36px;
+    border-radius: 46px;
+    padding: 8px 16px;
+  }
+
+  .app-header__profile-dropdown {
+    position: fixed;
+    top: 92px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 359px) {
+  .app-header__inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .app-header__login-button,
+  .app-header__auth {
+    align-self: flex-start;
+  }
+}
