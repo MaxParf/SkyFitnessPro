@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
@@ -15,6 +17,31 @@ const authSession: AuthSession = {
   username: 'ivan',
 }
 
+function getProfilePageStylesheet(): string {
+  return readFileSync('src/pages/ProfilePage/ProfilePage.module.scss', 'utf8')
+}
+
+function getMobileMediaBlock(stylesheet: string): string {
+  const mobileMediaBlock = stylesheet.match(
+    /@media \(max-width: 767px\) \{[\s\S]*?\n\}(?=\n\n@media|\n*$)/,
+  )?.[0]
+
+  expect(mobileMediaBlock).toBeDefined()
+
+  return mobileMediaBlock ?? ''
+}
+
+function getMobileRuleBlock(stylesheet: string, selector: string): string {
+  const selectorPattern = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const mobileRuleBlock = getMobileMediaBlock(stylesheet).match(
+    new RegExp(`${selectorPattern} \\{[\\s\\S]*?\\n  \\}`),
+  )?.[0]
+
+  expect(mobileRuleBlock).toBeDefined()
+
+  return mobileRuleBlock ?? ''
+}
+
 function LocationView() {
   const location = useLocation()
 
@@ -26,6 +53,7 @@ function renderProfilePage(
   onLogout = jest.fn(),
   selectedCourseIds: CourseId[] = ['ab1c3f', 'kfpq8e', 'ypox9r'],
   onRemoveCourse = jest.fn(),
+  courseProgressById: Partial<Record<CourseId, number>> = {},
 ) {
   return render(
     <MemoryRouter initialEntries={['/profile']}>
@@ -35,6 +63,7 @@ function renderProfilePage(
           element={
             <ProfilePage
               authSession={session}
+              courseProgressById={courseProgressById}
               isProfileDropdownOpen={false}
               onLoginClick={jest.fn()}
               onLogout={onLogout}
@@ -54,6 +83,10 @@ function renderProfilePage(
 }
 
 describe('ProfilePage', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('renders user data and profile course cards', () => {
     renderProfilePage()
 
@@ -82,6 +115,14 @@ describe('ProfilePage', () => {
     expect(screen.getByText('У вас пока нет приобретённых курсов.')).toBeInTheDocument()
   })
 
+  it('renders updated course progress when progress state is provided', () => {
+    renderProfilePage(authSession, jest.fn(), ['ab1c3f'], jest.fn(), {
+      ab1c3f: 75,
+    })
+
+    expect(screen.getByText('Прогресс 75%')).toBeInTheDocument()
+  })
+
   it('logs out and navigates to courses page', async () => {
     const user = userEvent.setup()
     const handleLogout = jest.fn()
@@ -92,6 +133,20 @@ describe('ProfilePage', () => {
 
     expect(handleLogout).toHaveBeenCalledTimes(1)
     expect(screen.getByTestId('location')).toHaveTextContent('/')
+  })
+
+  it('scrolls profile page to top from footer button', async () => {
+    const user = userEvent.setup()
+    const scrollToSpy = jest.spyOn(window, 'scrollTo').mockImplementation()
+
+    renderProfilePage()
+
+    await user.click(screen.getByRole('button', { name: 'Вернуться к началу страницы' }))
+
+    expect(screen.getByRole('button', { name: 'Вернуться к началу страницы' })).toHaveTextContent(
+      'Наверх ↑',
+    )
+    expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
   })
 
   it('opens workout selection modal when selected course card is clicked', async () => {
@@ -147,5 +202,52 @@ describe('ProfilePage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location')).toHaveTextContent('/workouts/workout-1')
     })
+  })
+
+  it('keeps mobile profile user card source styles stable', () => {
+    const stylesheet = getProfilePageStylesheet()
+    const mobileContainerBlock = getMobileRuleBlock(stylesheet, '.profile-page__container')
+    const mobileSectionBlock = getMobileRuleBlock(stylesheet, '.profile-page__section')
+    const mobileCardBlock = getMobileRuleBlock(stylesheet, '.profile-page__card')
+    const mobileAvatarBlock = getMobileRuleBlock(stylesheet, '.profile-page__avatar')
+    const mobileUserContentBlock = getMobileRuleBlock(stylesheet, '.profile-page__user-content')
+    const mobileNameBlock = getMobileRuleBlock(stylesheet, '.profile-page__name')
+    const mobileLoginBlock = getMobileRuleBlock(stylesheet, '.profile-page__login')
+    const mobileButtonBlock = getMobileRuleBlock(stylesheet, '.profile-page__button')
+    const mobileCoursesGridBlock = getMobileRuleBlock(stylesheet, '.profile-page__courses-grid')
+    const footerBlock = stylesheet.match(/\.profile-page__footer \{[\s\S]*?\n\}/)?.[0]
+    const backToTopBlock = stylesheet.match(/\.profile-page__back-to-top \{[\s\S]*?\n\}/)?.[0]
+    const mobileFooterBlock = getMobileRuleBlock(stylesheet, '.profile-page__footer')
+
+    expect(footerBlock).toContain('display: none;')
+    expect(backToTopBlock).toContain('min-width: 127px;')
+    expect(backToTopBlock).toContain('min-height: 52px;')
+    expect(backToTopBlock).toContain('padding: 16px 26px;')
+    expect(backToTopBlock).toContain('gap: 8px;')
+    expect(backToTopBlock).toContain('font-size: 18px;')
+    expect(mobileContainerBlock).toContain('gap: 24px;')
+    expect(mobileSectionBlock).toContain('gap: 24px;')
+    expect(mobileCardBlock).toContain('align-items: center;')
+    expect(mobileAvatarBlock).toContain('width: 141px;')
+    expect(mobileAvatarBlock).toContain('height: 141px;')
+    expect(mobileUserContentBlock).toContain('width: 283px;')
+    expect(mobileUserContentBlock).toContain('gap: 20px;')
+    expect(mobileUserContentBlock).toContain('margin-top: 30px;')
+    expect(mobileNameBlock).toContain('width: 283px;')
+    expect(mobileNameBlock).toContain('font-size: 24px;')
+    expect(mobileNameBlock).toContain('font-weight: 500;')
+    expect(mobileLoginBlock).toContain('width: 283px;')
+    expect(mobileLoginBlock).toContain('font-size: 16px;')
+    expect(mobileLoginBlock).toContain('font-weight: 400;')
+    expect(mobileButtonBlock).toContain('width: 100%;')
+    expect(mobileButtonBlock).toContain('height: 50px;')
+    expect(mobileButtonBlock).toContain('border-radius: 46px;')
+    expect(mobileButtonBlock).toContain('padding: 16px 26px;')
+    expect(mobileButtonBlock).toContain('font-size: 16px;')
+    expect(mobileCoursesGridBlock).toContain('gap: 24px;')
+    expect(mobileFooterBlock).toContain('display: flex;')
+    expect(mobileFooterBlock).toContain('justify-content: flex-end;')
+    expect(stylesheet).not.toMatch(/ProfilePage-module__/)
+    expect(stylesheet).not.toMatch(/(^|})\s*#[A-Za-z_-]/)
   })
 })

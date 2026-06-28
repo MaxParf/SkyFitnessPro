@@ -41,7 +41,13 @@ export async function requestFitnessApi<TResponse>(
     throw new FitnessApiError(message, response.status, Boolean(serverMessage))
   }
 
-  return (await response.json()) as TResponse
+  const responseText = await response.text()
+
+  if (!responseText) {
+    return {} as TResponse
+  }
+
+  return JSON.parse(responseText) as TResponse
 }
 
 function parseApiErrorResponse(errorText: string): ApiErrorResponseDto | null {

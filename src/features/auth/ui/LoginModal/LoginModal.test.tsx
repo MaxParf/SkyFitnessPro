@@ -478,7 +478,13 @@ describe('LoginModal', () => {
     })
     await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(
+      fetchMock.mock.calls.some(
+        ([url, init]) =>
+          url === 'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses' &&
+          init?.method === 'POST',
+      ),
+    ).toBe(false)
   })
 
   it('clears broken localStorage JSON and stays unauthenticated', async () => {
@@ -615,12 +621,20 @@ describe('LoginModal', () => {
     await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(4)
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) =>
+            url === 'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses' &&
+            init?.method === 'POST',
+        ),
+      ).toBe(true)
     })
-    expect(fetchMock.mock.calls[3]?.[0]).toBe(
-      'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses',
+    const addCourseCall = fetchMock.mock.calls.find(
+      ([url, init]) =>
+        url === 'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses' &&
+        init?.method === 'POST',
     )
-    expect(fetchMock.mock.calls[3]?.[1]).toMatchObject({
+    expect(addCourseCall?.[1]).toMatchObject({
       body: JSON.stringify({ courseId: 'ab1c3f' }),
       headers: { Authorization: 'Bearer jwt-token' },
       method: 'POST',
@@ -649,7 +663,13 @@ describe('LoginModal', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(4)
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) =>
+            url === 'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses' &&
+            init?.method === 'POST',
+        ),
+      ).toBe(true)
     })
 
     deferredProfile.resolve()
@@ -697,6 +717,7 @@ describe('LoginModal', () => {
       .mockResolvedValueOnce(
         createJsonResponse(createUserProfileResponse('ivan@example.com', ['ab1c3f'])),
       )
+      .mockResolvedValueOnce(createJsonResponse([]))
       .mockResolvedValueOnce(createJsonResponse({ message: 'Курс успешно удален!' }))
     Object.assign(globalThis, { fetch: fetchMock })
 
@@ -704,7 +725,7 @@ describe('LoginModal', () => {
     const user = await loginThroughApp('ivan@example.com')
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(3)
+      expect(screen.getByRole('button', { name: 'Открыть меню пользователя' })).toBeInTheDocument()
     })
     await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
     await user.click(screen.getByRole('button', { name: 'Мой профиль' }))
@@ -717,10 +738,12 @@ describe('LoginModal', () => {
       expect(screen.queryByRole('heading', { name: 'Йога' })).not.toBeInTheDocument()
     })
     expect(screen.getByText('У вас пока нет приобретённых курсов.')).toBeInTheDocument()
-    expect(fetchMock.mock.calls[3]?.[0]).toBe(
-      'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses/ab1c3f',
+    const removeCourseCall = fetchMock.mock.calls.find(
+      ([url, init]) =>
+        url === 'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses/ab1c3f' &&
+        init?.method === 'DELETE',
     )
-    expect(fetchMock.mock.calls[3]?.[1]).toMatchObject({
+    expect(removeCourseCall?.[1]).toMatchObject({
       headers: { Authorization: 'Bearer jwt-token' },
       method: 'DELETE',
     })

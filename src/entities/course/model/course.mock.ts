@@ -15,7 +15,7 @@ export const courseMockItems: Course[] = [
     durationLabel: '20 дней',
     dailyDurationLabel: '10-30 мин/день',
     difficultyLabel: 'Начальный',
-    workoutIds: ['17oz5f', 'xlpkqy', 'pyvaec', 'a1rqtt', 'vp4mas'],
+    workoutIds: ['3yvozj', 'hfgxlo', 'kcx5ai', 'kt6ah4', 'mrhuag'],
   },
   {
     id: 'kfpq8e',
@@ -25,7 +25,7 @@ export const courseMockItems: Course[] = [
     durationLabel: '40 дней',
     dailyDurationLabel: '30-45 мин/день',
     difficultyLabel: 'Начальный',
-    workoutIds: ['r3yaxb', '1pmjgw', 'okz3t1', 'kcx5ai', 'p9r9n5'],
+    workoutIds: ['9mefwq', '9yolz2', 'pi5vtr'],
   },
   {
     id: 'ypox9r',
@@ -35,7 +35,7 @@ export const courseMockItems: Course[] = [
     durationLabel: '20 дней',
     dailyDurationLabel: '45-60 мин/день',
     difficultyLabel: 'Сложный',
-    workoutIds: ['hfgxlo', 'k3rfhi', '9mefwq', '9yolz2', '9og0lc'],
+    workoutIds: ['gh7bd5', 'hwsut5', 'n18r8v', 'dq9rzo', 'rr70ie'],
   },
   {
     id: '6i67sm',
@@ -45,7 +45,7 @@ export const courseMockItems: Course[] = [
     durationLabel: '25 дней',
     dailyDurationLabel: '20-50 мин/день',
     difficultyLabel: 'Средний',
-    workoutIds: ['ixkxrt', '1yyv12', 'kssaqg', 'u0it5i', '7t6kps'],
+    workoutIds: ['e9ghsb', 'a1rqtt', 'mstcbg', 't3cpno'],
   },
   {
     id: 'q02a6i',
@@ -55,6 +55,6 @@ export const courseMockItems: Course[] = [
     durationLabel: '15 дней',
     dailyDurationLabel: '50-70 мин/день',
     difficultyLabel: 'Сложный',
-    workoutIds: ['mk9n7n', 'i6er3p', 'd5vdz5', 'lo4eiu', '5dnk32'],
+    workoutIds: ['xlpkqy', '17oz5f', 'pyvaec'],
   },
 ]

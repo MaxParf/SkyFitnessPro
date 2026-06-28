@@ -72,7 +72,7 @@ export function SelectWorkoutModal({ courseId, onClose, token }: SelectWorkoutMo
     }
 
     onClose()
-    navigate(`/workouts/${selectedWorkoutId}`)
+    navigate(`/workouts/${selectedWorkoutId}?courseId=${encodeURIComponent(courseId)}`)
   }
 
   const hasWorkouts = workouts.length > 0

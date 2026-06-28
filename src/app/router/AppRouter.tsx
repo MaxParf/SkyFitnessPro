@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom'
 
 import {
@@ -7,6 +7,7 @@ import {
   removeUserCourse,
 } from '@entities/course/api/user-course.service'
 import type { CourseId } from '@entities/course/model/course.types'
+import { loadCourseProgressPercent } from '@entities/workout/api/workout-progress.service'
 import { FitnessApiError } from '@shared/api/fitnessApi'
 import {
   clearAuthSession,
@@ -24,17 +25,54 @@ import { WorkoutPage } from '@pages/WorkoutPage/WorkoutPage'
 
 import { AppRoutes } from './routes'
 
+type CourseProgressById = Partial<Record<CourseId, number>>
+
 export function AppRouter() {
   const navigate = useNavigate()
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => loadAuthSession())
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [selectedCourseIds, setSelectedCourseIds] = useState<CourseId[]>([])
+  const [courseProgressById, setCourseProgressById] = useState<CourseProgressById>({})
+  const courseProgressRequestVersionRef = useRef<Partial<Record<CourseId, number>>>({})
 
   const clearSession = useCallback((): void => {
     clearAuthSession()
     setAuthSession(null)
     setSelectedCourseIds([])
+    setCourseProgressById({})
+    courseProgressRequestVersionRef.current = {}
+  }, [])
+
+  const restoreCourseProgress = useCallback((token: string, courseId: CourseId): void => {
+    const requestVersion = (courseProgressRequestVersionRef.current[courseId] ?? 0) + 1
+
+    courseProgressRequestVersionRef.current = {
+      ...courseProgressRequestVersionRef.current,
+      [courseId]: requestVersion,
+    }
+
+    void loadCourseProgressPercent(token, courseId)
+      .then((progressPercent) => {
+        if (courseProgressRequestVersionRef.current[courseId] !== requestVersion) {
+          return
+        }
+
+        setCourseProgressById((currentProgress) => ({
+          ...currentProgress,
+          [courseId]: progressPercent,
+        }))
+      })
+      .catch(() => {
+        if (courseProgressRequestVersionRef.current[courseId] !== requestVersion) {
+          return
+        }
+
+        setCourseProgressById((currentProgress) => ({
+          ...currentProgress,
+          [courseId]: 0,
+        }))
+      })
   }, [])
 
   const restoreSelectedCourses = useCallback(
@@ -48,6 +86,7 @@ export function AppRouter() {
           setSelectedCourseIds((currentIds) =>
             Array.from(new Set([...currentIds, ...restoredCourseIds])),
           )
+          restoredCourseIds.forEach((courseId) => restoreCourseProgress(session.token, courseId))
         })
         .catch((error) => {
           setSelectedCourseIds([])
@@ -57,7 +96,7 @@ export function AppRouter() {
           }
         })
     },
-    [clearSession],
+    [clearSession, restoreCourseProgress],
   )
 
   useEffect(() => {
@@ -108,8 +147,9 @@ export function AppRouter() {
       setSelectedCourseIds((currentIds) =>
         currentIds.includes(courseId) ? currentIds : [...currentIds, courseId],
       )
+      restoreCourseProgress(authSession.token, courseId)
     },
-    [authSession],
+    [authSession, restoreCourseProgress],
   )
 
   const handleRemoveCourse = useCallback(
@@ -121,10 +161,28 @@ export function AppRouter() {
       void removeUserCourse(authSession.token, courseId)
         .then(() => {
           setSelectedCourseIds((currentIds) => currentIds.filter((id) => id !== courseId))
+          setCourseProgressById((currentProgress) => {
+            const { [courseId]: removedProgress, ...nextProgress } = currentProgress
+
+            void removedProgress
+
+            return nextProgress
+          })
         })
         .catch(() => undefined)
     },
     [authSession],
+  )
+
+  const handleWorkoutProgressChange = useCallback(
+    (params: { courseId: CourseId; workoutId: string }): void => {
+      if (!authSession) {
+        return
+      }
+
+      restoreCourseProgress(authSession.token, params.courseId)
+    },
+    [authSession, restoreCourseProgress],
   )
 
   const appHeaderProps = {
@@ -157,12 +215,21 @@ export function AppRouter() {
           element={
             <ProfilePage
               {...appHeaderProps}
+              courseProgressById={courseProgressById}
               onRemoveCourse={handleRemoveCourse}
               selectedCourseIds={selectedCourseIds}
             />
           }
         />
-        <Route path={AppRoutes.workout} element={<WorkoutPage {...appHeaderProps} />} />
+        <Route
+          path={AppRoutes.workout}
+          element={
+            <WorkoutPage
+              {...appHeaderProps}
+              onWorkoutProgressChange={handleWorkoutProgressChange}
+            />
+          }
+        />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       {isLoginModalOpen ? (

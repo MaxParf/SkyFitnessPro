@@ -47,7 +47,7 @@ const workoutsResponse = [
 function LocationView() {
   const location = useLocation()
 
-  return <p data-testid="location">{location.pathname}</p>
+  return <p data-testid="location">{`${location.pathname}${location.search}`}</p>
 }
 
 function renderModal(onClose = jest.fn()) {
@@ -116,7 +116,9 @@ describe('SelectWorkoutModal', () => {
     await user.click(screen.getByRole('button', { name: 'Начать' }))
 
     expect(handleClose).toHaveBeenCalledTimes(1)
-    expect(screen.getByTestId('location')).toHaveTextContent('/workouts/workout-2')
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/workouts/workout-2?courseId=course-1',
+    )
   })
 
   it('renders empty state and disables start when API returns no workouts', async () => {

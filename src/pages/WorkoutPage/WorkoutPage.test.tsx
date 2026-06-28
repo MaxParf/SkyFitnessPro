@@ -4,7 +4,12 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import type { AuthSession } from '@features/auth/model/auth-session.types'
 
-import { mockFetchPending, mockFetchResponse, mockFetchSuccess } from '../../test/fetchMock'
+import {
+  createJsonResponse,
+  mockFetchPending,
+  mockFetchResponse,
+  mockFetchSuccess,
+} from '../../test/fetchMock'
 import { WorkoutPage } from './WorkoutPage'
 
 const authSession: AuthSession = {
@@ -15,7 +20,7 @@ const authSession: AuthSession = {
 }
 
 const workoutDto = {
-  _id: 'a1rqtt',
+  _id: '3yvozj',
   exercises: [
     {
       _id: 'exercise-1',
@@ -37,9 +42,18 @@ const workoutDto = {
   video: 'https://www.youtube.com/embed/gJPs7b8SpVw',
 }
 
-function renderWorkoutPage(session: AuthSession | null = authSession, workoutId = 'a1rqtt') {
+function renderWorkoutPage(
+  session: AuthSession | null = authSession,
+  workoutId = '3yvozj',
+  onWorkoutProgressChange = jest.fn(),
+  courseId = '',
+) {
+  const initialEntry = courseId
+    ? `/workouts/${workoutId}?courseId=${courseId}`
+    : `/workouts/${workoutId}`
+
   return render(
-    <MemoryRouter initialEntries={[`/workouts/${workoutId}`]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route
           path="/workouts/:workoutId"
@@ -52,6 +66,7 @@ function renderWorkoutPage(session: AuthSession | null = authSession, workoutId 
               onProfileClick={jest.fn()}
               onProfileDropdownClose={jest.fn()}
               onProfileNavigate={jest.fn()}
+              onWorkoutProgressChange={onWorkoutProgressChange}
             />
           }
         />
@@ -69,7 +84,7 @@ describe('WorkoutPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://webdev-hw-api.herokuapp.com/api/fitness/workouts/a1rqtt',
+      'https://webdev-hw-api.herokuapp.com/api/fitness/workouts/3yvozj',
       expect.objectContaining({
         headers: { Authorization: 'Bearer jwt-token' },
         method: 'GET',
@@ -104,6 +119,144 @@ describe('WorkoutPage', () => {
     expect(screen.getByText('Наклоны назад 0%')).toBeInTheDocument()
     expect(screen.getByText('Поднятие ног 0%')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Заполнить свой прогресс' })).toBeInTheDocument()
+  })
+
+  it('opens workout progress modal from progress button', async () => {
+    const user = userEvent.setup()
+    mockFetchSuccess(workoutDto)
+
+    renderWorkoutPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Заполнить свой прогресс' }))
+
+    expect(screen.getByRole('dialog', { name: 'Мой прогресс' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Сколько раз вы сделали наклоны вперед?')).toBeInTheDocument()
+    expect(screen.getByLabelText('Сколько раз вы сделали наклоны назад?')).toBeInTheDocument()
+    expect(screen.getByLabelText('Сколько раз вы сделали поднятие ног?')).toBeInTheDocument()
+  })
+
+  it('saves progress, updates exercise rows, and reports course progress', async () => {
+    const user = userEvent.setup()
+    const handleWorkoutProgressChange = jest.fn()
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(workoutDto))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          progressData: [0, 0, 0],
+          workoutCompleted: false,
+          workoutId: '3yvozj',
+        }),
+      )
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Прогресс сохранён!' }))
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderWorkoutPage(authSession, '3yvozj', handleWorkoutProgressChange, 'ab1c3f')
+
+    await user.click(await screen.findByRole('button', { name: 'Заполнить свой прогресс' }))
+    await user.clear(screen.getByLabelText('Сколько раз вы сделали наклоны вперед?'))
+    await user.type(screen.getByLabelText('Сколько раз вы сделали наклоны вперед?'), '30')
+    await user.clear(screen.getByLabelText('Сколько раз вы сделали наклоны назад?'))
+    await user.type(screen.getByLabelText('Сколько раз вы сделали наклоны назад?'), '6')
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    expect(await screen.findByText('Наклоны вперед 100%')).toBeInTheDocument()
+    expect(screen.getByText('Наклоны назад 50%')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Мой прогресс' })).not.toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://webdev-hw-api.herokuapp.com/api/fitness/courses/ab1c3f/workouts/3yvozj',
+      expect.objectContaining({
+        body: JSON.stringify({ progressData: [30, 6, 0] }),
+        headers: { Authorization: 'Bearer jwt-token' },
+        method: 'PATCH',
+      }),
+    )
+    expect(handleWorkoutProgressChange).toHaveBeenCalledWith({
+      courseId: 'ab1c3f',
+      workoutId: '3yvozj',
+    })
+  })
+
+  it('falls back to live workout-to-course mapping for direct workout URLs', async () => {
+    const user = userEvent.setup()
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(workoutDto))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          progressData: [0, 0, 0],
+          workoutCompleted: false,
+          workoutId: '3yvozj',
+        }),
+      )
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Прогресс сохранён!' }))
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderWorkoutPage(authSession, '3yvozj')
+
+    await user.click(await screen.findByRole('button', { name: 'Заполнить свой прогресс' }))
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    expect(await screen.findByText('Наклоны вперед 0%')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://webdev-hw-api.herokuapp.com/api/fitness/courses/ab1c3f/workouts/3yvozj',
+      expect.objectContaining({
+        method: 'PATCH',
+      }),
+    )
+  })
+
+  it('does not call PATCH and shows inline error when courseId cannot be resolved', async () => {
+    const user = userEvent.setup()
+    const externalWorkoutDto = {
+      ...workoutDto,
+      _id: 'external-workout',
+    }
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(externalWorkoutDto))
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderWorkoutPage(authSession, 'external-workout')
+
+    await user.click(await screen.findByRole('button', { name: 'Заполнить свой прогресс' }))
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Не удалось сохранить прогресс. Попробуйте ещё раз.',
+    )
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('dialog', { name: 'Мой прогресс' })).toBeInTheDocument()
+  })
+
+  it('shows inline error and keeps modal open when PATCH fails', async () => {
+    const user = userEvent.setup()
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(workoutDto))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          progressData: [0, 0, 0],
+          workoutCompleted: false,
+          workoutId: '3yvozj',
+        }),
+      )
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Ошибка' }, 500))
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderWorkoutPage(authSession, '3yvozj', jest.fn(), 'ab1c3f')
+
+    await user.click(await screen.findByRole('button', { name: 'Заполнить свой прогресс' }))
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Не удалось сохранить прогресс. Попробуйте ещё раз.',
+    )
+    expect(screen.getByRole('dialog', { name: 'Мой прогресс' })).toBeInTheDocument()
   })
 
   it('renders loading state while workout is loading', () => {

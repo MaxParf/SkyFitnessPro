@@ -17,6 +17,7 @@ import styles from './ProfilePage.module.scss'
 
 export type ProfilePageProps = {
   authSession: AuthSession | null
+  courseProgressById?: Partial<Record<CourseId, number>>
   isProfileDropdownOpen: boolean
   onLoginClick: () => void
   onLogout: () => void
@@ -27,14 +28,9 @@ export type ProfilePageProps = {
   selectedCourseIds: CourseId[]
 }
 
-const profileCourseProgressById: Record<CourseId, number> = {
-  ab1c3f: 40,
-  kfpq8e: 0,
-  ypox9r: 100,
-}
-
 export function ProfilePage({
   authSession,
+  courseProgressById = {},
   isProfileDropdownOpen,
   onLoginClick,
   onLogout,
@@ -63,6 +59,10 @@ export function ProfilePage({
 
   const handleCloseWorkouts = (): void => {
     setSelectedWorkoutCourseId(null)
+  }
+
+  const handleScrollTop = (): void => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   if (!authSession) {
@@ -98,7 +98,7 @@ export function ProfilePage({
     .filter((course) => selectedCourseIds.includes(course.id))
     .map((course) => ({
       course,
-      progressPercent: profileCourseProgressById[course.id] ?? 0,
+      progressPercent: courseProgressById[course.id] ?? 0,
     }))
 
   return (
@@ -176,6 +176,16 @@ export function ProfilePage({
             )}
           </div>
         </section>
+
+        <footer className={styles['profile-page__footer']}>
+          <Button
+            aria-label="Вернуться к началу страницы"
+            className={styles['profile-page__back-to-top']}
+            onClick={handleScrollTop}
+          >
+            Наверх ↑
+          </Button>
+        </footer>
       </Container>
 
       {selectedWorkoutCourseId ? (

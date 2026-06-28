@@ -80,10 +80,17 @@
   }
 
   .app-header__inner {
-    align-items: flex-start;
+    display: flex;
+    width: 100%;
+    height: 35px;
+    max-height: 35px;
+    min-height: 35px;
+    align-items: center;
     box-sizing: border-box;
+    flex-direction: row;
     justify-content: space-between;
-    gap: 40px;
+    gap: 0;
+    overflow: visible;
   }
 
   .app-header__brand-group {
@@ -114,6 +121,20 @@
     min-height: 36px;
     border-radius: 46px;
     padding: 8px 16px;
+  }
+
+  .app-header__auth {
+    width: 54px;
+    height: 36px;
+    flex: 0 0 54px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .app-header__auth:has(.app-header__login-button) {
+    width: auto;
+    flex-basis: auto;
   }
 
   .app-header__profile-dropdown {
