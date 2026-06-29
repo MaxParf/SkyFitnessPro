@@ -206,6 +206,7 @@ describe('ProfilePage', () => {
 
   it('keeps mobile profile user card source styles stable', () => {
     const stylesheet = getProfilePageStylesheet()
+    const mobilePageBlock = getMobileRuleBlock(stylesheet, '.profile-page')
     const mobileContainerBlock = getMobileRuleBlock(stylesheet, '.profile-page__container')
     const mobileSectionBlock = getMobileRuleBlock(stylesheet, '.profile-page__section')
     const mobileCardBlock = getMobileRuleBlock(stylesheet, '.profile-page__card')
@@ -225,6 +226,8 @@ describe('ProfilePage', () => {
     expect(backToTopBlock).toContain('padding: 16px 26px;')
     expect(backToTopBlock).toContain('gap: 8px;')
     expect(backToTopBlock).toContain('font-size: 18px;')
+    expect(mobilePageBlock).toContain('padding: 40px 0 40px;')
+    expect(mobilePageBlock).not.toContain('padding: 40px 0 44px;')
     expect(mobileContainerBlock).toContain('gap: 24px;')
     expect(mobileSectionBlock).toContain('gap: 24px;')
     expect(mobileCardBlock).toContain('align-items: center;')

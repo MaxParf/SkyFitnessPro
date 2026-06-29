@@ -129,7 +129,12 @@ export function CoursesPage({
         {coursesStatus === 'success' ? (
           <div className={styles['courses-page__grid']} aria-label="Список курсов">
             {courses.map((course) => (
-              <CourseCard key={course.id} course={course} onAddClick={handleAddCourse} />
+              <CourseCard
+                key={course.id}
+                course={course}
+                isSelected={selectedCourseIds.includes(course.id)}
+                onAddClick={handleAddCourse}
+              />
             ))}
           </div>
         ) : null}

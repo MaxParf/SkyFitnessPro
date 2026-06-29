@@ -93,7 +93,12 @@ describe('CoursesPage', () => {
 
     renderCoursesPage(authSession, handleAddCourse, ['ab1c3f'])
 
-    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+    const selectedButton = await screen.findByRole('button', {
+      name: 'Добавить курс: Йога',
+      pressed: true,
+    })
+
+    await user.click(selectedButton)
 
     expect(handleAddCourse).not.toHaveBeenCalled()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()

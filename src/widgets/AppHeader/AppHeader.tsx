@@ -13,28 +13,33 @@ import styles from './AppHeader.module.scss'
 
 export type AppHeaderProps = {
   authSession: AuthSession | null
+  className?: string
   isProfileDropdownOpen: boolean
   onLoginClick: () => void
   onLogout: () => void
   onProfileClick: () => void
   onProfileNavigate: () => void
   onProfileDropdownClose: () => void
+  showSubtitle?: boolean
 }
 
 export function AppHeader({
   authSession,
+  className = '',
   isProfileDropdownOpen,
   onLoginClick,
   onLogout,
   onProfileClick,
   onProfileNavigate,
   onProfileDropdownClose,
+  showSubtitle = true,
 }: AppHeaderProps) {
   const profileDropdownId = useId()
   const profileTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const headerClassName = [styles['app-header'], className].filter(Boolean).join(' ')
 
   return (
-    <header className={styles['app-header']}>
+    <header className={headerClassName}>
       <Container className={styles['app-header__container']}>
         <div className={styles['app-header__inner']}>
           <div className={styles['app-header__brand-group']}>
@@ -46,7 +51,9 @@ export function AppHeader({
                 alt="SkyFitnessPro"
               />
             </a>
-            <p className={styles['app-header__subtitle']}>Онлайн-тренировки для занятий дома</p>
+            {showSubtitle ? (
+              <p className={styles['app-header__subtitle']}>Онлайн-тренировки для занятий дома</p>
+            ) : null}
           </div>
           <div className={styles['app-header__auth']}>
             {authSession ? (

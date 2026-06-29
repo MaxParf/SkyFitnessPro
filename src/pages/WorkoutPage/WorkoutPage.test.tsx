@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -40,6 +42,61 @@ const workoutDto = {
   ],
   name: 'Урок 2. Основные движения',
   video: 'https://www.youtube.com/embed/gJPs7b8SpVw',
+}
+
+function getWorkoutPageStylesheet(): string {
+  return readFileSync('src/pages/WorkoutPage/WorkoutPage.module.scss', 'utf8')
+}
+
+function getRuleBlock(stylesheet: string, selector: string): string {
+  const selectorPattern = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const ruleBlock = stylesheet.match(new RegExp(`${selectorPattern} \\{[\\s\\S]*?\\n\\}`))?.[0]
+
+  expect(ruleBlock).toBeDefined()
+
+  return ruleBlock ?? ''
+}
+
+function getMobileMediaBlock(stylesheet: string): string {
+  const mobileMediaBlock = stylesheet.match(
+    /@media \(max-width: 767px\) \{[\s\S]*?\n\}(?=\n\n@media|\n*$)/,
+  )?.[0]
+
+  expect(mobileMediaBlock).toBeDefined()
+
+  return mobileMediaBlock ?? ''
+}
+
+function getDesktopMediaBlock(stylesheet: string): string {
+  const desktopMediaBlock = stylesheet.match(
+    /@media \(min-width: 768px\) \{[\s\S]*?\n\}(?=\n\n@media|\n*$)/,
+  )?.[0]
+
+  expect(desktopMediaBlock).toBeDefined()
+
+  return desktopMediaBlock ?? ''
+}
+
+function getMobileRuleBlock(stylesheet: string, selector: string): string {
+  const selectorPattern = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const mobileRuleBlock = getMobileMediaBlock(stylesheet).match(
+    new RegExp(`${selectorPattern} \\{[\\s\\S]*?\\n  \\}`),
+  )?.[0]
+
+  expect(mobileRuleBlock).toBeDefined()
+
+  return mobileRuleBlock ?? ''
+}
+
+function getDesktopRuleBlock(stylesheet: string, selector: string): string {
+  const selectorPattern = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const desktopRuleBlock = getDesktopMediaBlock(stylesheet).match(
+    new RegExp(`${selectorPattern} \\{[\\s\\S]*?\\n  \\}`),
+  )?.[0]
+
+  expect(desktopRuleBlock).toBeDefined()
+
+  return desktopRuleBlock ?? ''
 }
 
 function renderWorkoutPage(
@@ -92,6 +149,91 @@ describe('WorkoutPage', () => {
     )
   })
 
+  it('does not render header subtitle', () => {
+    mockFetchPending()
+
+    renderWorkoutPage()
+
+    expect(screen.queryByText('Онлайн-тренировки для занятий дома')).not.toBeInTheDocument()
+  })
+
+  it('keeps desktop workout page source padding stable', () => {
+    const stylesheet = getWorkoutPageStylesheet()
+    const pageBlock = getRuleBlock(stylesheet, '.workout-page')
+    const desktopHeaderBlock = getDesktopRuleBlock(stylesheet, '.workout-page__header')
+
+    expect(pageBlock).toContain('padding: 50px 0 260px;')
+    expect(pageBlock).not.toContain('padding: 24px 0 120px;')
+    expect(desktopHeaderBlock).toContain('margin-bottom: 45px;')
+    expect(stylesheet).not.toMatch(/WorkoutPage-module__/)
+    expect(stylesheet).not.toMatch(/(^|})\s*#[A-Za-z_-]/)
+  })
+
+  it('keeps mobile workout page source spacing and title styles stable', () => {
+    const stylesheet = getWorkoutPageStylesheet()
+    const mobilePageBlock = getMobileRuleBlock(stylesheet, '.workout-page')
+    const mobileContainerBlock = getMobileRuleBlock(stylesheet, '.workout-page__container')
+    const mobileTitleBlock = getMobileRuleBlock(stylesheet, '.workout-page__title-block')
+    const mobileTitle = getMobileRuleBlock(stylesheet, '.workout-page__title')
+
+    expect(mobilePageBlock).toContain('padding: 40px 0 40px;')
+    expect(mobilePageBlock).not.toContain('padding: 72px 0 56px;')
+    expect(mobileContainerBlock).toContain('gap: 24px;')
+    expect(mobileTitleBlock).toContain('min-height: 26px;')
+    expect(mobileTitleBlock).toContain('gap: 0;')
+    expect(mobileTitleBlock).not.toContain('min-height: 60px;')
+    expect(mobileTitle).toContain('font-size: 24px;')
+    expect(mobileTitle).toContain('line-height: 26px;')
+  })
+
+  it('keeps mobile workout exercises source layout stable', () => {
+    const stylesheet = getWorkoutPageStylesheet()
+    const contentBlock = getRuleBlock(stylesheet, '.workout-page__exercises-content')
+    const mobileCardBlock = getMobileRuleBlock(stylesheet, '.workout-page__exercises-card')
+    const mobileContentBlock = getMobileRuleBlock(stylesheet, '.workout-page__exercises-content')
+    const mobileTitleBlock = getMobileRuleBlock(stylesheet, '.workout-page__exercises-title')
+    const mobileGridBlock = getMobileRuleBlock(stylesheet, '.workout-page__exercises-grid')
+    const mobileExerciseTextBlock = getMobileRuleBlock(stylesheet, '.workout-page__exercise-text')
+    const mobileExerciseTrackBlock = getMobileRuleBlock(stylesheet, '.workout-page__exercise-track')
+
+    expect(contentBlock).toContain('display: contents;')
+    expect(mobileCardBlock).toContain('padding: 30px;')
+    expect(mobileContentBlock).toContain('display: flex;')
+    expect(mobileContentBlock).toContain('max-width: 283px;')
+    expect(mobileContentBlock).toContain('gap: 40px;')
+    expect(mobileTitleBlock).toContain('width: 283px;')
+    expect(mobileTitleBlock).toContain('min-height: 70px;')
+    expect(mobileTitleBlock).toContain('font-size: 32px;')
+    expect(mobileTitleBlock).toContain('font-weight: 400;')
+    expect(mobileGridBlock).toContain('max-width: 283px;')
+    expect(mobileGridBlock).toContain('gap: 24px;')
+    expect(mobileExerciseTextBlock).toContain('width: 283px;')
+    expect(mobileExerciseTextBlock).toContain('font-size: 18px;')
+    expect(mobileExerciseTrackBlock).toContain('width: 283px;')
+    expect(mobileExerciseTrackBlock).toContain('height: 6px;')
+    expect(mobileExerciseTrackBlock).toContain('border-radius: 50px;')
+  })
+
+  it('keeps mobile workout play button source layout stable', () => {
+    const stylesheet = getWorkoutPageStylesheet()
+    const mobileStylesheet = getMobileMediaBlock(stylesheet)
+    const mobilePlayButtonBlock = getMobileRuleBlock(stylesheet, '.workout-page__play-button')
+    const mobilePlayIconBlock = getMobileRuleBlock(stylesheet, '.workout-page__play-icon')
+
+    expect(mobilePlayButtonBlock).toContain('width: 46px;')
+    expect(mobilePlayButtonBlock).toContain('height: 46px;')
+    expect(mobilePlayButtonBlock).toContain('top: 71px;')
+    expect(mobilePlayButtonBlock).toContain('left: 148px;')
+    expect(mobilePlayButtonBlock).toContain('opacity: 0.75;')
+    expect(mobilePlayButtonBlock).toContain('transform: none;')
+    expect(mobilePlayIconBlock).toContain('width: 46px;')
+    expect(mobilePlayIconBlock).toContain('height: 46px;')
+    expect(mobileStylesheet).not.toMatch(
+      /\.workout-page__play-button,\s*\.workout-page__play-icon\s*\{[\s\S]*?96px/,
+    )
+    expect(stylesheet).not.toMatch(/WorkoutPage-module__/)
+  })
+
   it('renders video preview and accessible play button', async () => {
     const user = userEvent.setup()
     mockFetchSuccess(workoutDto)
@@ -118,6 +260,7 @@ describe('WorkoutPage', () => {
     expect(screen.getByText('Наклоны вперед 0%')).toBeInTheDocument()
     expect(screen.getByText('Наклоны назад 0%')).toBeInTheDocument()
     expect(screen.getByText('Поднятие ног 0%')).toBeInTheDocument()
+    expect(document.querySelector('.workout-page__exercises-content')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Заполнить свой прогресс' })).toBeInTheDocument()
   })
 

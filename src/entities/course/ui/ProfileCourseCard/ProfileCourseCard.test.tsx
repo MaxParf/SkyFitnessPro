@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { render, screen } from '@testing-library/react'
 
 import type { Course } from '../../model/course.types'
@@ -12,6 +14,22 @@ const course: Course = {
   imageVariant: 'yoga',
   title: 'Йога',
   workoutIds: ['workout-1'],
+}
+
+function getProfileCourseCardStylesheet(): string {
+  return readFileSync(
+    'src/entities/course/ui/ProfileCourseCard/ProfileCourseCard.module.scss',
+    'utf8',
+  )
+}
+
+function getRuleBlock(stylesheet: string, selector: string): string {
+  const selectorPattern = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const ruleBlock = stylesheet.match(new RegExp(`${selectorPattern} \\{[\\s\\S]*?\\n\\}`))?.[0]
+
+  expect(ruleBlock).toBeDefined()
+
+  return ruleBlock ?? ''
 }
 
 describe('ProfileCourseCard', () => {
@@ -49,5 +67,15 @@ describe('ProfileCourseCard', () => {
     render(<ProfileCourseCard course={course} progressPercent={40} />)
 
     expect(screen.getByRole('button', { name: 'Удалить курс Йога' })).toBeInTheDocument()
+  })
+
+  it('keeps desktop content width from shrinking', () => {
+    const stylesheet = getProfileCourseCardStylesheet()
+    const contentBlock = getRuleBlock(stylesheet, '.profile-course-card__content')
+
+    expect(contentBlock).toContain('width: 300px;')
+    expect(contentBlock).not.toContain('max-width: calc(100% - 52px);')
+    expect(stylesheet).not.toMatch(/ProfileCourseCard-module__/)
+    expect(stylesheet).not.toMatch(/(^|})\s*#[A-Za-z_-]/)
   })
 })

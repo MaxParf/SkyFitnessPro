@@ -26,4 +26,20 @@ describe('CourseCard', () => {
 
     expect(screen.getByRole('button', { name: 'Добавить курс: Йога' })).toBeInTheDocument()
   })
+
+  it('marks add button as not pressed when course is not selected', () => {
+    render(<CourseCard course={course} />)
+
+    expect(
+      screen.getByRole('button', { name: 'Добавить курс: Йога', pressed: false }),
+    ).toBeInTheDocument()
+  })
+
+  it('marks add button as pressed when course is selected', () => {
+    render(<CourseCard course={course} isSelected />)
+
+    expect(
+      screen.getByRole('button', { name: 'Добавить курс: Йога', pressed: true }),
+    ).toBeInTheDocument()
+  })
 })

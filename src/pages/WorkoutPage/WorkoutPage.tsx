@@ -157,12 +157,14 @@ export function WorkoutPage({
       <main className={styles['workout-page']}>
         <AppHeader
           authSession={authSession}
+          className={styles['workout-page__header']}
           isProfileDropdownOpen={isProfileDropdownOpen}
           onLoginClick={onLoginClick}
           onLogout={onLogout}
           onProfileClick={onProfileClick}
           onProfileDropdownClose={onProfileDropdownClose}
           onProfileNavigate={onProfileNavigate}
+          showSubtitle={false}
         />
         <section className={styles['workout-page__container']}>
           <ErrorState
@@ -182,12 +184,14 @@ export function WorkoutPage({
       <main className={styles['workout-page']}>
         <AppHeader
           authSession={authSession}
+          className={styles['workout-page__header']}
           isProfileDropdownOpen={isProfileDropdownOpen}
           onLoginClick={onLoginClick}
           onLogout={onLogout}
           onProfileClick={onProfileClick}
           onProfileDropdownClose={onProfileDropdownClose}
           onProfileNavigate={onProfileNavigate}
+          showSubtitle={false}
         />
         <section className={styles['workout-page__container']}>
           <ErrorState title="Тренировка не найдена" />
@@ -201,12 +205,14 @@ export function WorkoutPage({
       <main className={styles['workout-page']}>
         <AppHeader
           authSession={authSession}
+          className={styles['workout-page__header']}
           isProfileDropdownOpen={isProfileDropdownOpen}
           onLoginClick={onLoginClick}
           onLogout={onLogout}
           onProfileClick={onProfileClick}
           onProfileDropdownClose={onProfileDropdownClose}
           onProfileNavigate={onProfileNavigate}
+          showSubtitle={false}
         />
         <section className={styles['workout-page__container']}>
           <Loader />
@@ -220,12 +226,14 @@ export function WorkoutPage({
       <main className={styles['workout-page']}>
         <AppHeader
           authSession={authSession}
+          className={styles['workout-page__header']}
           isProfileDropdownOpen={isProfileDropdownOpen}
           onLoginClick={onLoginClick}
           onLogout={onLogout}
           onProfileClick={onProfileClick}
           onProfileDropdownClose={onProfileDropdownClose}
           onProfileNavigate={onProfileNavigate}
+          showSubtitle={false}
         />
         <section className={styles['workout-page__container']}>
           <ErrorState
@@ -241,12 +249,14 @@ export function WorkoutPage({
     <main className={styles['workout-page']}>
       <AppHeader
         authSession={authSession}
+        className={styles['workout-page__header']}
         isProfileDropdownOpen={isProfileDropdownOpen}
         onLoginClick={onLoginClick}
         onLogout={onLogout}
         onProfileClick={onProfileClick}
         onProfileDropdownClose={onProfileDropdownClose}
         onProfileNavigate={onProfileNavigate}
+        showSubtitle={false}
       />
       <section className={styles['workout-page__container']} aria-labelledby="workout-page-title">
         <div className={styles['workout-page__title-block']}>
@@ -275,41 +285,43 @@ export function WorkoutPage({
         </section>
 
         <article className={styles['workout-page__exercises-card']}>
-          <h2 className={styles['workout-page__exercises-title']}>
-            Упражнения {workout.name.toLowerCase()}
-          </h2>
+          <div className={styles['workout-page__exercises-content']}>
+            <h2 className={styles['workout-page__exercises-title']}>
+              Упражнения {workout.name.toLowerCase()}
+            </h2>
 
-          {workout.exercises.length > 0 ? (
-            <div className={styles['workout-page__exercises-grid']}>
-              {exerciseColumns.map((column, columnIndex) => (
-                <div className={styles['workout-page__exercise-column']} key={columnIndex}>
-                  {column.map((exercise) => (
-                    <div className={styles['workout-page__exercise']} key={exercise.id}>
-                      <p className={styles['workout-page__exercise-text']}>
-                        {exercise.name} {exercise.progressPercent}%
-                      </p>
-                      <div className={styles['workout-page__exercise-track']} aria-hidden="true">
-                        <div
-                          className={styles['workout-page__exercise-track-fill']}
-                          style={getExerciseProgressStyle(exercise.progressPercent)}
-                        />
+            {workout.exercises.length > 0 ? (
+              <div className={styles['workout-page__exercises-grid']}>
+                {exerciseColumns.map((column, columnIndex) => (
+                  <div className={styles['workout-page__exercise-column']} key={columnIndex}>
+                    {column.map((exercise) => (
+                      <div className={styles['workout-page__exercise']} key={exercise.id}>
+                        <p className={styles['workout-page__exercise-text']}>
+                          {exercise.name} {exercise.progressPercent}%
+                        </p>
+                        <div className={styles['workout-page__exercise-track']} aria-hidden="true">
+                          <div
+                            className={styles['workout-page__exercise-track-fill']}
+                            style={getExerciseProgressStyle(exercise.progressPercent)}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState title="Для этой тренировки пока нет упражнений." />
-          )}
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="Для этой тренировки пока нет упражнений." />
+            )}
 
-          <button
-            className={styles['workout-page__progress-button']}
-            onClick={handleProgressClick}
-            type="button"
-          >
-            Заполнить свой прогресс
-          </button>
+            <button
+              className={styles['workout-page__progress-button']}
+              onClick={handleProgressClick}
+              type="button"
+            >
+              Заполнить свой прогресс
+            </button>
+          </div>
         </article>
       </section>
       {isProgressModalOpen ? (

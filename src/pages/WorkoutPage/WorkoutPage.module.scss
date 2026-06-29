@@ -1,6 +1,6 @@
 .workout-page {
   min-height: 100vh;
-  padding: 24px 0 120px;
+  padding: 50px 0 260px;
   background: #fafafa;
 }
 
@@ -11,6 +11,12 @@
   flex-direction: column;
   gap: 40px;
   margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .workout-page__header {
+    margin-bottom: 45px;
+  }
 }
 
 .workout-page__title-block {
@@ -91,6 +97,10 @@
   border-radius: 30px;
   background: #ffffff;
   box-shadow: 0 4px 67px -12px rgb(0 0 0 / 13%);
+}
+
+.workout-page__exercises-content {
+  display: contents;
 }
 
 .workout-page__exercises-title {
@@ -200,35 +210,70 @@
 
 @media (max-width: 767px) {
   .workout-page {
-    padding: 72px 0 56px;
+    padding: 40px 0 40px;
   }
 
   .workout-page__container {
     max-width: calc(100% - 32px);
+    gap: 24px;
+  }
+
+  .workout-page__title-block {
+    min-height: 26px;
+    gap: 0;
   }
 
   .workout-page__title {
-    font-size: 36px;
+    font-size: 24px;
+    line-height: 26px;
   }
 
   .workout-page__video-preview {
     border-radius: 20px;
   }
 
-  .workout-page__play-button,
+  .workout-page__play-button {
+    top: 71px;
+    left: 148px;
+    width: 46px;
+    height: 46px;
+    opacity: 0.75;
+    transform: none;
+  }
+
   .workout-page__play-icon {
-    width: 96px;
-    height: 96px;
+    width: 46px;
+    height: 46px;
   }
 
   .workout-page__exercises-card {
-    padding: 28px 20px;
+    padding: 30px;
     border-radius: 24px;
   }
 
+  .workout-page__exercises-content {
+    display: flex;
+    width: 100%;
+    max-width: 283px;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .workout-page__exercises-title {
+    width: 283px;
+    max-width: 100%;
+    min-height: 70px;
+    font-family: StratosSkyeng, Roboto, sans-serif;
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 35px;
+  }
+
   .workout-page__exercises-grid {
+    width: 100%;
+    max-width: 283px;
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 24px;
     margin-top: 0;
   }
 
@@ -236,5 +281,29 @@
   .workout-page__progress-button,
   .workout-page__return-link {
     width: 100%;
+  }
+
+  .workout-page__exercise-column {
+    max-width: 283px;
+  }
+
+  .workout-page__exercise {
+    width: 100%;
+    max-width: 283px;
+    min-height: 36px;
+    gap: 10px;
+  }
+
+  .workout-page__exercise-text {
+    width: 283px;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 20px;
+  }
+
+  .workout-page__exercise-track {
+    width: 283px;
+    height: 6px;
+    border-radius: 50px;
   }
 }

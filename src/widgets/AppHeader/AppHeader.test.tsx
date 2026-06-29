@@ -28,6 +28,15 @@ function getMobileMediaBlock(stylesheet: string): string {
   return mobileMediaBlock ?? ''
 }
 
+function getRuleBlock(stylesheet: string, selector: string): string {
+  const selectorPattern = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const ruleBlock = stylesheet.match(new RegExp(`${selectorPattern} \\{[\\s\\S]*?\\n\\}`))?.[0]
+
+  expect(ruleBlock).toBeDefined()
+
+  return ruleBlock ?? ''
+}
+
 function getMobileRuleBlock(stylesheet: string, selector: string): string {
   const selectorPattern = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const mobileRuleBlock = getMobileMediaBlock(stylesheet).match(
@@ -49,6 +58,7 @@ function renderAppHeader(
     onProfileDropdownClose: jest.fn(),
     onProfileNavigate: jest.fn(),
   },
+  showSubtitle?: boolean,
 ) {
   return {
     handlers,
@@ -61,6 +71,7 @@ function renderAppHeader(
         onProfileClick={handlers.onProfileClick}
         onProfileDropdownClose={handlers.onProfileDropdownClose}
         onProfileNavigate={handlers.onProfileNavigate}
+        showSubtitle={showSubtitle}
       />,
     ),
   }
@@ -79,6 +90,18 @@ describe('AppHeader', () => {
     expect(handlers.onLoginClick).toHaveBeenCalledTimes(1)
   })
 
+  it('renders subtitle by default', () => {
+    renderAppHeader()
+
+    expect(screen.getByText('Онлайн-тренировки для занятий дома')).toBeInTheDocument()
+  })
+
+  it('does not render subtitle when disabled', () => {
+    renderAppHeader(null, false, undefined, false)
+
+    expect(screen.queryByText('Онлайн-тренировки для занятий дома')).not.toBeInTheDocument()
+  })
+
   it('renders user trigger and profile dropdown actions', async () => {
     const user = userEvent.setup()
     const { handlers } = renderAppHeader(authSession, true)
@@ -95,11 +118,33 @@ describe('AppHeader', () => {
 
   it('keeps mobile brand source styles without duplicated top spacing', () => {
     const stylesheet = getAppHeaderStylesheet()
+    const mobileContainerBlock = getMobileRuleBlock(stylesheet, '.app-header__container')
     const mobileBrandBlock = getMobileRuleBlock(stylesheet, '.app-header__brand')
 
+    expect(mobileContainerBlock).toContain('width: calc(100% - 32px);')
+    expect(mobileContainerBlock).toContain('max-width: 343px;')
+    expect(mobileContainerBlock).toContain('margin-inline: auto;')
+    expect(mobileContainerBlock).toContain('padding-inline: 0;')
     expect(mobileBrandBlock).toContain('width: 220px;')
     expect(mobileBrandBlock).toContain('height: 35px;')
     expect(mobileBrandBlock).not.toContain('margin-top: 40px;')
+    expect(stylesheet).not.toMatch(/AppHeader-module__/)
+    expect(stylesheet).not.toMatch(/(^|})\s*#[A-Za-z_-]/)
+  })
+
+  it('keeps desktop header source layout stable', () => {
+    const stylesheet = getAppHeaderStylesheet()
+    const headerBlock = getRuleBlock(stylesheet, '.app-header')
+    const innerBlock = getRuleBlock(stylesheet, '.app-header__inner')
+    const brandBlock = getRuleBlock(stylesheet, '.app-header__brand')
+
+    expect(headerBlock).toContain('margin-bottom: 60px;')
+    expect(headerBlock).not.toContain('margin-bottom: 74px;')
+    expect(innerBlock).toContain('height: 50px;')
+    expect(innerBlock).toContain('align-items: center;')
+    expect(brandBlock).toContain('width: 220px;')
+    expect(brandBlock).toContain('height: 35px;')
+    expect(brandBlock).toContain('align-items: center;')
     expect(stylesheet).not.toMatch(/AppHeader-module__/)
     expect(stylesheet).not.toMatch(/(^|})\s*#[A-Za-z_-]/)
   })

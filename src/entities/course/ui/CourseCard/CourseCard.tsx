@@ -1,5 +1,6 @@
 import calendarIcon from '@image/calendar.svg'
 import clockIcon from '@image/clock.svg'
+import minusIcon from '@image/minus.svg'
 import plusIcon from '@image/plus.svg'
 import signalIcon from '@image/signal.svg'
 import { Button } from '@shared/ui/Button'
@@ -19,10 +20,11 @@ const imageVariantClassNames: Record<CourseImageVariant, string> = {
 
 export type CourseCardProps = {
   course: Course
+  isSelected?: boolean
   onAddClick?: (courseId: CourseId) => Promise<void> | void
 }
 
-export function CourseCard({ course, onAddClick }: CourseCardProps) {
+export function CourseCard({ course, isSelected = false, onAddClick }: CourseCardProps) {
   const imageClassName = [
     styles['course-card__image'],
     course.imageVariant ? imageVariantClassNames[course.imageVariant] : '',
@@ -40,6 +42,7 @@ export function CourseCard({ course, onAddClick }: CourseCardProps) {
         <img className={imageClassName} src={course.imageSrc} alt="" />
         <Button
           aria-label={`Добавить курс: ${course.title}`}
+          aria-pressed={isSelected}
           className={styles['course-card__add-button']}
           onClick={handleAddClick}
           variant="icon"
@@ -49,7 +52,7 @@ export function CourseCard({ course, onAddClick }: CourseCardProps) {
             className={styles['course-card__add-icon']}
             decorative
             size="medium"
-            src={plusIcon}
+            src={isSelected ? minusIcon : plusIcon}
           />
         </Button>
       </div>
