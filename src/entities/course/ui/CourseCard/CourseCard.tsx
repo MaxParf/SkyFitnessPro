@@ -6,6 +6,7 @@ import signalIcon from '@image/signal.svg'
 import { Button } from '@shared/ui/Button'
 import { Icon } from '@shared/ui/Icon'
 import { MetaBadge } from '@shared/ui/MetaBadge'
+import type { KeyboardEvent, MouseEvent } from 'react'
 
 import type { Course, CourseId, CourseImageVariant } from '../../model/course.types'
 import styles from './CourseCard.module.scss'
@@ -22,9 +23,15 @@ export type CourseCardProps = {
   course: Course
   isSelected?: boolean
   onAddClick?: (courseId: CourseId) => Promise<void> | void
+  onCardClick?: (courseId: CourseId) => void
 }
 
-export function CourseCard({ course, isSelected = false, onAddClick }: CourseCardProps) {
+export function CourseCard({
+  course,
+  isSelected = false,
+  onAddClick,
+  onCardClick,
+}: CourseCardProps) {
   const imageClassName = [
     styles['course-card__image'],
     course.imageVariant ? imageVariantClassNames[course.imageVariant] : '',
@@ -32,12 +39,30 @@ export function CourseCard({ course, isSelected = false, onAddClick }: CourseCar
     .filter(Boolean)
     .join(' ')
 
-  const handleAddClick = (): void => {
+  const handleCardClick = (): void => {
+    onCardClick?.(course.id)
+  }
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      handleCardClick()
+    }
+  }
+
+  const handleAddClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation()
     onAddClick?.(course.id)
   }
 
   return (
-    <article className={styles['course-card']}>
+    <article
+      aria-label={`Открыть описание курса ${course.title}`}
+      className={styles['course-card']}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      tabIndex={0}
+    >
       <div className={styles['course-card__image-wrapper']}>
         <img className={imageClassName} src={course.imageSrc} alt="" />
         <Button

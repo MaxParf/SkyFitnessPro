@@ -4,13 +4,16 @@ import type { Course } from '../../model/course.types'
 import { CourseCard } from './CourseCard'
 
 const course: Course = {
+  dailyDurationLabel: '10-30 мин/день',
+  description: 'Описание курса',
+  difficultyLabel: 'Начальный',
+  directions: ['Дыхание'],
+  durationLabel: '20 дней',
+  fitting: ['Новичкам'],
   id: 'test-course',
-  title: 'Йога',
   imageSrc: '/image.jpg',
   imageVariant: 'yoga',
-  durationLabel: '20 дней',
-  dailyDurationLabel: '10-30 мин/день',
-  difficultyLabel: 'Начальный',
+  title: 'Йога',
   workoutIds: ['workout-1'],
 }
 

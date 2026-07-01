@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { loadCourses } from '@entities/course/api/course.service'
 import type { Course, CourseId } from '@entities/course/model/course.types'
@@ -11,6 +12,7 @@ import { ErrorState } from '@shared/ui/ErrorState/ErrorState'
 import { Loader } from '@shared/ui/Loader/Loader'
 import { AppHeader } from '@widgets/AppHeader'
 
+import { AppRoutes } from '../../app/router/routes'
 import styles from './CoursesPage.module.scss'
 
 export type CoursesPageProps = {
@@ -36,6 +38,7 @@ export function CoursesPage({
   onProfileNavigate,
   selectedCourseIds,
 }: CoursesPageProps) {
+  const navigate = useNavigate()
   const [courses, setCourses] = useState<Course[]>([])
   const [coursesStatus, setCoursesStatus] = useState<'empty' | 'error' | 'loading' | 'success'>(
     'loading',
@@ -79,6 +82,10 @@ export function CoursesPage({
     } catch {
       return
     }
+  }
+
+  const handleCourseCardClick = (courseId: CourseId): void => {
+    navigate(AppRoutes.course.replace(':courseId', courseId))
   }
 
   return (
@@ -134,6 +141,7 @@ export function CoursesPage({
                 course={course}
                 isSelected={selectedCourseIds.includes(course.id)}
                 onAddClick={handleAddCourse}
+                onCardClick={handleCourseCardClick}
               />
             ))}
           </div>

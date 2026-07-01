@@ -7,8 +7,11 @@ import { ProfileCourseCard } from './ProfileCourseCard'
 
 const course: Course = {
   dailyDurationLabel: '10-30 мин/день',
+  description: 'Описание курса',
+  directions: ['Дыхание'],
   difficultyLabel: 'Начальный',
   durationLabel: '20 дней',
+  fitting: ['Новичкам'],
   id: 'test-course',
   imageSrc: '/image.jpg',
   imageVariant: 'yoga',

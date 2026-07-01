@@ -67,8 +67,11 @@ export function mapCourseDtoToCourse(courseDto: CourseDto): Course {
 
   return {
     dailyDurationLabel: presentation.dailyDurationLabel,
+    description: courseDto.description,
     difficultyLabel: presentation.difficultyLabel,
+    directions: courseDto.directions,
     durationLabel: presentation.durationLabel,
+    fitting: courseDto.fitting,
     id: courseDto._id,
     imageSrc: presentation.imageSrc,
     imageVariant: presentation.imageVariant,
