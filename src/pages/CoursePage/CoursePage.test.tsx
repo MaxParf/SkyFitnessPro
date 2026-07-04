@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { useState } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import type { AuthSession } from '@features/auth/model/auth-session.types'
@@ -151,6 +152,9 @@ function renderCoursePage(
   session: AuthSession | null = null,
   isProfileDropdownOpen = false,
   onLoginClick = jest.fn(),
+  selectedCourseIds: string[] = [],
+  onAddCourse = jest.fn<Promise<void>, [string]>(),
+  onRemoveCourse = jest.fn<Promise<void>, [string]>(),
 ) {
   return render(
     <MemoryRouter initialEntries={[`/courses/${courseId}`]}>
@@ -161,17 +165,66 @@ function renderCoursePage(
             <CoursePage
               authSession={session}
               isProfileDropdownOpen={isProfileDropdownOpen}
+              onAddCourse={onAddCourse}
               onLoginClick={onLoginClick}
               onLogout={jest.fn()}
               onProfileClick={jest.fn()}
               onProfileDropdownClose={jest.fn()}
               onProfileNavigate={jest.fn()}
+              onRemoveCourse={onRemoveCourse}
+              selectedCourseIds={selectedCourseIds}
             />
           }
         />
       </Routes>
     </MemoryRouter>,
   )
+}
+
+function renderCoursePageWithSelection(initialSelectedCourseIds: string[] = []) {
+  const handleAddCourse = jest.fn<Promise<void>, [string]>().mockResolvedValue(undefined)
+  const handleRemoveCourse = jest.fn<Promise<void>, [string]>().mockResolvedValue(undefined)
+
+  function CoursePageSelectionHarness() {
+    const [selectedCourseIds, setSelectedCourseIds] = useState(initialSelectedCourseIds)
+
+    const handleAdd = async (courseId: string): Promise<void> => {
+      await handleAddCourse(courseId)
+      setSelectedCourseIds((currentIds) =>
+        currentIds.includes(courseId) ? currentIds : [...currentIds, courseId],
+      )
+    }
+
+    const handleRemove = async (courseId: string): Promise<void> => {
+      await handleRemoveCourse(courseId)
+      setSelectedCourseIds((currentIds) => currentIds.filter((id) => id !== courseId))
+    }
+
+    return (
+      <CoursePage
+        authSession={authSession}
+        isProfileDropdownOpen={false}
+        onAddCourse={handleAdd}
+        onLoginClick={jest.fn()}
+        onLogout={jest.fn()}
+        onProfileClick={jest.fn()}
+        onProfileDropdownClose={jest.fn()}
+        onProfileNavigate={jest.fn()}
+        onRemoveCourse={handleRemove}
+        selectedCourseIds={selectedCourseIds}
+      />
+    )
+  }
+
+  render(
+    <MemoryRouter initialEntries={['/courses/ab1c3f']}>
+      <Routes>
+        <Route path="/courses/:courseId" element={<CoursePageSelectionHarness />} />
+      </Routes>
+    </MemoryRouter>,
+  )
+
+  return { handleAddCourse, handleRemoveCourse }
 }
 
 describe('CoursePage', () => {
@@ -224,10 +277,12 @@ describe('CoursePage', () => {
       expect(screen.getByText(item)).toBeInTheDocument()
     })
     expect(screen.getByRole('button', { name: 'Войдите, чтобы добавить курс' })).toBeInTheDocument()
+    const conversion = document.querySelector('.course-page__conversion')
+    const directions = document.querySelector('.course-page__directions')
     const cta = document.querySelector('.course-page__cta')
     const ctaInner = cta?.querySelector('.course-page__cta-inner')
-    const visual = ctaInner?.querySelector('.course-page__cta-visual')
-    const ribbonClip = visual?.querySelector('.course-page__cta-ribbon-clip')
+    const visual = document.querySelector('.course-page__cta-visual')
+    const ribbonClip = document.querySelector('.course-page__cta-ribbon-clip')
     const ribbon = ribbonClip?.querySelector('.course-page__cta-ribbon')
     const arc = visual?.querySelector('.course-page__cta-arc')
     const manBlock = document.querySelector('.course-page__cta-man-block')
@@ -235,14 +290,23 @@ describe('CoursePage', () => {
     const manImage = manFrame?.querySelector('.course-page__cta-man')
     const ctaContent = ctaInner?.querySelector('.course-page__cta-content')
 
+    expect(conversion).toBeInTheDocument()
+    expect(conversion?.children[0]).toBe(directions)
+    expect(conversion?.children[1]).toBe(visual)
+    expect(conversion?.children[2]).toBe(cta)
+    expect(conversion?.contains(directions ?? null)).toBe(true)
+    expect(conversion?.contains(visual ?? null)).toBe(true)
+    expect(conversion?.contains(cta ?? null)).toBe(true)
     expect(cta).toBeInTheDocument()
     expect(ctaInner).toBeInTheDocument()
     expect(visual).toBeInTheDocument()
     expect(visual).toHaveAttribute('aria-hidden', 'true')
     expect(ribbonClip).toBeInTheDocument()
+    expect(ribbonClip?.parentElement).toBe(visual)
     expect(ribbon).toBeInTheDocument()
-    expect(ribbonClip?.contains(ribbon ?? null)).toBe(true)
+    expect(ribbon?.parentElement).toBe(ribbonClip)
     expect(ctaInner?.contains(ctaContent ?? null)).toBe(true)
+    expect(cta?.contains(visual ?? null)).toBe(false)
     expect(visual?.contains(ctaContent ?? null)).toBe(false)
     expect(arc).toBeInTheDocument()
     expect(arc?.tagName.toLowerCase()).toBe('img')
@@ -255,6 +319,53 @@ describe('CoursePage', () => {
     expect(manImage).toBeInTheDocument()
     expect(manImage).toHaveAttribute('src', 'test-file-stub')
     expect(manImage).toHaveAttribute('alt', '')
+  })
+
+  it('renders add course CTA text for authenticated users', async () => {
+    mockFetchSuccess(courseDtoItems)
+
+    renderCoursePage('ab1c3f', authSession)
+
+    expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Добавить курс' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Войдите, чтобы добавить курс' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('renders remove course CTA text for authenticated users when course is selected', async () => {
+    mockFetchSuccess(courseDtoItems)
+
+    renderCoursePage('ab1c3f', authSession, false, jest.fn(), ['ab1c3f'])
+
+    expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Удалить курс' })).toBeInTheDocument()
+  })
+
+  it('adds course from CTA and changes text to remove for authenticated users', async () => {
+    mockFetchSuccess(courseDtoItems)
+
+    const { handleAddCourse } = renderCoursePageWithSelection()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Добавить курс' }))
+
+    await waitFor(() => {
+      expect(handleAddCourse).toHaveBeenCalledWith('ab1c3f')
+    })
+    expect(await screen.findByRole('button', { name: 'Удалить курс' })).toBeInTheDocument()
+  })
+
+  it('removes course from CTA and changes text to add for authenticated users', async () => {
+    mockFetchSuccess(courseDtoItems)
+
+    const { handleRemoveCourse } = renderCoursePageWithSelection(['ab1c3f'])
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Удалить курс' }))
+
+    await waitFor(() => {
+      expect(handleRemoveCourse).toHaveBeenCalledWith('ab1c3f')
+    })
+    expect(await screen.findByRole('button', { name: 'Добавить курс' })).toBeInTheDocument()
   })
 
   it('keeps CTA content contained by the inner card source structure', async () => {
@@ -272,6 +383,7 @@ describe('CoursePage', () => {
     expect(ctaInner).toBeInTheDocument()
     expect(ctaContent).toBeInTheDocument()
     expect(ctaInner?.contains(ctaContent ?? null)).toBe(true)
+    expect(ctaInner?.contains(visual ?? null)).toBe(false)
     expect(visual?.contains(ctaContent ?? null)).toBe(false)
   })
 
@@ -535,6 +647,7 @@ describe('CoursePage', () => {
     const suitableCardBlock = getRuleBlock(stylesheet, '.course-page__suitable-card')
     const suitableCardInnerBlock = getRuleBlock(stylesheet, '.course-page__suitable-card-inner')
     const suitableTextBlock = getRuleBlock(stylesheet, '.course-page__suitable-text')
+    const conversionBlock = getRuleBlock(stylesheet, '.course-page__conversion')
     const directionsCardBlock = getRuleBlock(stylesheet, '.course-page__directions-card')
     const directionStarBlock = getRuleBlock(stylesheet, '.course-page__direction-star')
     const ctaBlock = getRuleBlock(stylesheet, '.course-page__cta')
@@ -552,6 +665,7 @@ describe('CoursePage', () => {
     const ctaManBlock = getRuleBlock(stylesheet, '.course-page__cta-man')
     const mobileBlock = getMobileMediaBlock(stylesheet)
 
+    expect(containerBlock).toContain('position: relative;')
     expect(containerBlock).toContain('width: 1160px;')
     expect(containerBlock).toContain('max-width: 100%;')
     expect(containerBlock).toContain('padding-inline: 0;')
@@ -629,6 +743,11 @@ describe('CoursePage', () => {
     expect(suitableTextBlock).toContain('align-items: center;')
     expect(getRuleBlock(stylesheet, '.course-page__suitable')).toContain('width: 1160px;')
     expect(getRuleBlock(stylesheet, '.course-page__suitable')).toContain('max-width: 100%;')
+    expect(conversionBlock).toContain('position: relative;')
+    expect(conversionBlock).toContain('display: flex;')
+    expect(conversionBlock).toContain('width: 1160px;')
+    expect(conversionBlock).toContain('max-width: 100%;')
+    expect(conversionBlock).toContain('flex-direction: column;')
     expect(getRuleBlock(stylesheet, '.course-page__directions')).toContain('width: 1160px;')
     expect(getRuleBlock(stylesheet, '.course-page__directions')).toContain('max-width: 100%;')
     expect(directionsCardBlock).toContain('width: 1160px;')
@@ -638,7 +757,7 @@ describe('CoursePage', () => {
     expect(ctaBlock).toContain('width: 1160px;')
     expect(ctaBlock).toContain('max-width: 100%;')
     expect(ctaBlock).toContain('height: 486px;')
-    expect(ctaBlock).toContain('margin-top: 42px;')
+    expect(ctaBlock).toContain('margin-top: 60px;')
     expect(ctaInnerBlock).toContain('width: 1160px;')
     expect(ctaInnerBlock).toContain('max-width: 100%;')
     expect(ctaInnerBlock).toContain('height: 486px;')
@@ -666,13 +785,19 @@ describe('CoursePage', () => {
     expect(ctaButtonBlock).toContain('border-radius: 46px;')
     expect(ctaButtonBlock).toContain('padding: 16px 26px;')
     expect(ctaButtonBlock).toContain('background: #bcec30;')
-    expect(ctaVisualBlock).toContain('position: absolute;')
-    expect(ctaVisualBlock).toContain('inset: 0 0 0 -30px;')
+    expect(ctaVisualBlock).toContain('position: relative;')
+    expect(ctaVisualBlock).toContain('left: -30px;')
+    expect(ctaVisualBlock).toContain('width: 1160px;')
+    expect(ctaVisualBlock).toContain('max-width: 100%;')
+    expect(ctaVisualBlock).toContain('height: 0;')
+    expect(ctaVisualBlock).toContain('margin-top: 42px;')
     expect(ctaVisualBlock).toContain('pointer-events: none;')
     expect(ctaRibbonClipBlock).toContain('position: absolute;')
+    expect(ctaRibbonClipBlock).toContain('z-index: 1;')
     expect(ctaRibbonClipBlock).toContain('inset: 0;')
-    expect(ctaRibbonClipBlock).toContain('overflow: hidden;')
     expect(ctaRibbonClipBlock).toContain('pointer-events: none;')
+    expect(ctaRibbonClipBlock).not.toContain('border:')
+    expect(ctaRibbonClipBlock).not.toContain('background:')
     expect(ctaRibbonBlock).toContain('position: absolute;')
     expect(ctaRibbonBlock).toContain('z-index: 1;')
     expect(ctaRibbonBlock).toContain('top: 120px;')
@@ -712,13 +837,19 @@ describe('CoursePage', () => {
     expect(ctaManBlock).toContain('left: 64px;')
     expect(ctaManBlock).toContain('display: block;')
     expect(ctaManBlock).toContain('transform: rotate(1.1deg);')
-    expect(stylesheet).toContain(`.course-page__cta-visual {
-    display: none;
+    expect(mobileBlock).toContain(`.course-page {
+    overflow-x: hidden;
+    overflow-x: clip;
+    padding: 40px 0;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__container {
+    gap: 40px;
   }`)
     expect(mobileBlock).toContain(`.course-page__container,
   .course-page__banner,
   .course-page__suitable,
   .course-page__suitable-cards,
+  .course-page__conversion,
   .course-page__directions,
   .course-page__directions-card,
   .course-page__cta,
@@ -730,8 +861,179 @@ describe('CoursePage', () => {
     width: calc(100% - 32px);
     padding-inline: 0;
   }`)
+    expect(mobileBlock).toContain(`.course-page__conversion {
+    position: relative;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__banner {
+    position: relative;
+    height: 389px;
+    border-radius: 30px;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__banner-title-block {
+    display: none;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__banner-image {
+    position: absolute;
+    top: -57px;
+    right: auto;
+    left: -230.57px;
+    width: 794.62px;
+    height: 557px;
+    transform: none;
+    object-position: center;
+  }`)
     expect(mobileBlock).toContain(`.course-page__suitable-card {
     flex: none;
+    min-height: 141px;
+    gap: 10px;
+    padding: 20px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #151720 0%, #1e212e 100%);
+  }`)
+    expect(mobileBlock).toContain(`.course-page__directions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    height: auto;
+    flex-direction: column;
+    gap: 24px;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__directions-card {
+    position: relative;
+    z-index: 1;
+    height: auto;
+    min-height: 0;
+    padding: 30px;
+    border-radius: 28px;
+    background: #bcec30;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    margin-top: 0;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta-inner {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+    height: auto;
+    min-height: 412px;
+    box-sizing: border-box;
+    margin-top: 0;
+    overflow: visible;
+    padding: 30px;
+    border-radius: 30px;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta-content {
+    display: flex;
+    width: 283px;
+    max-width: 100%;
+    min-height: 0;
+    margin: 0;
+    flex-direction: column;
+    gap: 28px;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta-title {
+    width: 100%;
+    max-width: 554px;
+    min-height: auto;
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 35px;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta-list {
+    width: 283px;
+    height: auto;
+    box-sizing: border-box;
+    min-height: 0;
+    color: rgb(0 0 0 / 60%);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 110%;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta-button {
+    min-height: 50px;
+    box-sizing: border-box;
+    padding: 16px 26px;
+    border-radius: 46px;
+    background: #bcec30;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta-visual {
+    position: relative;
+    z-index: 3;
+    display: block;
+    width: calc(100% + 32px);
+    height: 156px;
+    max-width: none;
+    margin-top: 0;
+    margin-right: -16px;
+    margin-bottom: 0;
+    margin-left: -16px;
+    pointer-events: none;
+  }`)
+    expect(mobileBlock).not.toContain('height: 455.5px;')
+    expect(mobileBlock).not.toContain('margin-top: -188px;')
+    expect(mobileBlock).not.toContain('order: 0;')
+    expect(mobileBlock).not.toContain('order: 1;')
+    expect(mobileBlock).not.toContain('order: 2;')
+    expect(mobileBlock).toContain(`.course-page__cta-ribbon-clip {
+    /* Centralized for final mobile visual tuning of the green ribbon. */
+    --course-page-cta-ribbon-top: -105px;
+    --course-page-cta-ribbon-left: 67px;
+    --course-page-cta-ribbon-width: 375px;
+    --course-page-cta-ribbon-height: 290px;
+    --course-page-cta-ribbon-transform: rotate(-12.38deg);
+
+    position: absolute;
+    z-index: 1;
+    top: 117.44px;
+    left: -54px;
+    width: 431.03px;
+    height: 251.47px;
+    box-sizing: border-box;
+    overflow: visible;
+    transform: rotate(12.38deg);
+  }`)
+    expect(mobileBlock).not.toContain('border: 10.14px solid #c6ff00;')
+    expect(mobileBlock).toContain(`.course-page__cta-ribbon {
+    position: absolute;
+    z-index: 1;
+    top: var(--course-page-cta-ribbon-top);
+    left: var(--course-page-cta-ribbon-left);
+    display: block;
+    width: var(--course-page-cta-ribbon-width);
+    max-width: none;
+    height: var(--course-page-cta-ribbon-height);
+    transform: var(--course-page-cta-ribbon-transform);
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta-arc {
+    z-index: 3;
+    top: -22px;
+    left: 205px;
+    width: 32.16px;
+    height: 20.3px;
+    transform: scale(1.6);
+  }`)
+    expect(mobileBlock).not.toContain('top: 1102px;')
+    expect(mobileBlock).toContain(`.course-page__cta-man-block {
+    z-index: 3;
+    top: -56px;
+    left: -54px;
+    width: 100%;
+    height: 100%;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__cta-man {
+    top: -43.1px;
+    left: 201px;
+    width: auto;
+    height: 348.91px;
+    transform: rotate(0deg);
   }`)
     expect(stylesheet).not.toMatch(/CoursePage-module__/)
     expect(stylesheet).not.toMatch(/(^|})\s*#[A-Za-z_-]/)

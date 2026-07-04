@@ -19,6 +19,7 @@ export type CoursesPageProps = {
   authSession: AuthSession | null
   isProfileDropdownOpen: boolean
   onAddCourse: (courseId: CourseId) => Promise<void>
+  onRemoveCourse: (courseId: CourseId) => Promise<void> | void
   onLoginClick: () => void
   onLogout: () => void
   onProfileClick: () => void
@@ -31,6 +32,7 @@ export function CoursesPage({
   authSession,
   isProfileDropdownOpen,
   onAddCourse,
+  onRemoveCourse,
   onLoginClick,
   onLogout,
   onProfileClick,
@@ -67,17 +69,18 @@ export function CoursesPage({
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleAddCourse = async (courseId: CourseId): Promise<void> => {
+  const handleCourseActionClick = async (courseId: CourseId): Promise<void> => {
     if (!authSession) {
       onLoginClick()
       return
     }
 
-    if (selectedCourseIds.includes(courseId)) {
-      return
-    }
-
     try {
+      if (selectedCourseIds.includes(courseId)) {
+        await onRemoveCourse(courseId)
+        return
+      }
+
       await onAddCourse(courseId)
     } catch {
       return
@@ -140,7 +143,7 @@ export function CoursesPage({
                 key={course.id}
                 course={course}
                 isSelected={selectedCourseIds.includes(course.id)}
-                onAddClick={handleAddCourse}
+                onAddClick={handleCourseActionClick}
                 onCardClick={handleCourseCardClick}
               />
             ))}

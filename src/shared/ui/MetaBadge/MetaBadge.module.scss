@@ -18,8 +18,21 @@
 
 @media (max-width: 767px) {
   .meta-badge {
+    box-sizing: border-box;
     min-height: 38px;
+    align-items: center;
     padding: 10px;
     border-radius: 50px;
+    gap: 6px;
+  }
+
+  .meta-badge__icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .meta-badge__text {
+    font-size: 16px;
+    line-height: 18px;
   }
 }

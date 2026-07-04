@@ -153,23 +153,20 @@ export function AppRouter() {
   )
 
   const handleRemoveCourse = useCallback(
-    (courseId: CourseId): void => {
+    async (courseId: CourseId): Promise<void> => {
       if (!authSession) {
         return
       }
 
-      void removeUserCourse(authSession.token, courseId)
-        .then(() => {
-          setSelectedCourseIds((currentIds) => currentIds.filter((id) => id !== courseId))
-          setCourseProgressById((currentProgress) => {
-            const { [courseId]: removedProgress, ...nextProgress } = currentProgress
+      await removeUserCourse(authSession.token, courseId)
+      setSelectedCourseIds((currentIds) => currentIds.filter((id) => id !== courseId))
+      setCourseProgressById((currentProgress) => {
+        const { [courseId]: removedProgress, ...nextProgress } = currentProgress
 
-            void removedProgress
+        void removedProgress
 
-            return nextProgress
-          })
-        })
-        .catch(() => undefined)
+        return nextProgress
+      })
     },
     [authSession],
   )
@@ -204,12 +201,23 @@ export function AppRouter() {
             <CoursesPage
               {...appHeaderProps}
               onAddCourse={handleAddCourse}
+              onRemoveCourse={handleRemoveCourse}
               selectedCourseIds={selectedCourseIds}
             />
           }
         />
         <Route path={AppRoutes.auth} element={<AuthPage />} />
-        <Route path={AppRoutes.course} element={<CoursePage {...appHeaderProps} />} />
+        <Route
+          path={AppRoutes.course}
+          element={
+            <CoursePage
+              {...appHeaderProps}
+              onAddCourse={handleAddCourse}
+              onRemoveCourse={handleRemoveCourse}
+              selectedCourseIds={selectedCourseIds}
+            />
+          }
+        />
         <Route
           path={AppRoutes.profile}
           element={

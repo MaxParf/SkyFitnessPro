@@ -166,16 +166,36 @@
     width: 100%;
   }
 
+  .profile-course-card__image--step-aerobics {
+    position: absolute;
+    top: -192px;
+    left: -95px;
+    width: 794.62px;
+    height: 557px;
+    transform: scale(1.9);
+    object-position: center;
+  }
+
   .profile-course-card__content {
-    width: auto;
-    max-width: calc(100% - 43px);
+    width: 300px;
+    max-width: 100%;
+    height: auto;
+    min-height: 274px;
     padding: 0;
-    margin: 0 21.5px;
+    margin: 0 auto;
   }
 
   .profile-course-card__title {
     color: var(--color-black);
     font-size: 24px;
     line-height: 1.1;
+  }
+
+  .profile-course-card__action {
+    width: 300px;
+    max-width: 100%;
+    height: 50px;
+    min-height: 50px;
+    border-radius: 46px;
   }
 }

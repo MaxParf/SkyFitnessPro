@@ -97,8 +97,8 @@
   }
 
   .user-profile-trigger__avatar-icon {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
   }
 
   .user-profile-trigger__content {
@@ -113,23 +113,23 @@
     width: 8px;
     height: 4px;
     flex-basis: 8px;
+    background: url('../../../../image/chevron.svg') center / 8px 4px no-repeat;
+    color: #000000;
   }
 
   .user-profile-trigger__chevron::before,
   .user-profile-trigger__chevron::after {
-    top: 1px;
-    width: 5px;
-    height: 2px;
+    display: none;
   }
 }
 
 @media (max-width: 359px) {
   .user-profile-trigger {
-    width: auto;
-    justify-content: flex-start;
+    width: 54px;
+    justify-content: flex-end;
   }
 
   .user-profile-trigger__name {
-    width: 79px;
+    display: none;
   }
 }

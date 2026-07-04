@@ -453,7 +453,7 @@ describe('LoginModal', () => {
     expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
   })
 
-  it('does not send add request for course restored from user profile', async () => {
+  it('renders restored course card in remove state without sending add request', async () => {
     window.localStorage.setItem(
       'skyfitnesspro.auth',
       JSON.stringify({
@@ -471,12 +471,11 @@ describe('LoginModal', () => {
     Object.assign(globalThis, { fetch: fetchMock })
 
     renderApp()
-    const user = userEvent.setup()
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2)
     })
-    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+    expect(await screen.findByRole('button', { name: 'Удалить курс: Йога' })).toBeInTheDocument()
 
     expect(
       fetchMock.mock.calls.some(
@@ -485,6 +484,48 @@ describe('LoginModal', () => {
           init?.method === 'POST',
       ),
     ).toBe(false)
+  })
+
+  it('removes course from profile after main page minus button click', async () => {
+    window.localStorage.setItem(
+      'skyfitnesspro.auth',
+      JSON.stringify({
+        email: 'ivan@example.com',
+        token: 'restored-token',
+        username: 'ivan',
+      }),
+    )
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(createJsonResponse(courseDtoItems))
+      .mockResolvedValueOnce(
+        createJsonResponse(createUserProfileResponse('ivan@example.com', ['ab1c3f'])),
+      )
+      .mockResolvedValueOnce(createJsonResponse([]))
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Курс успешно удален!' }))
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    renderApp()
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Удалить курс: Йога' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Добавить курс: Йога' })).toBeInTheDocument()
+    })
+    expect(
+      fetchMock.mock.calls.some(
+        ([url, init]) =>
+          url === 'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/courses/ab1c3f' &&
+          init?.method === 'DELETE',
+      ),
+    ).toBe(true)
+
+    await user.click(screen.getByRole('button', { name: 'Открыть меню пользователя' }))
+    await user.click(screen.getByRole('button', { name: 'Мой профиль' }))
+
+    expect(screen.queryByRole('heading', { name: 'Йога' })).not.toBeInTheDocument()
+    expect(screen.getByText('У вас пока нет приобретённых курсов.')).toBeInTheDocument()
   })
 
   it('clears broken localStorage JSON and stays unauthenticated', async () => {

@@ -42,7 +42,7 @@ describe('CourseCard', () => {
     render(<CourseCard course={course} isSelected />)
 
     expect(
-      screen.getByRole('button', { name: 'Добавить курс: Йога', pressed: true }),
+      screen.getByRole('button', { name: 'Удалить курс: Йога', pressed: true }),
     ).toBeInTheDocument()
   })
 })

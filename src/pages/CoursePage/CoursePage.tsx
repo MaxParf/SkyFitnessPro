@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { loadCourses } from '@entities/course/api/course.service'
-import type { Course } from '@entities/course/model/course.types'
+import type { Course, CourseId } from '@entities/course/model/course.types'
 import type { AuthSession } from '@features/auth/model/auth-session.types'
 import { Container } from '@shared/ui/Container'
 import { EmptyState } from '@shared/ui/EmptyState/EmptyState'
@@ -26,11 +26,14 @@ import styles from './CoursePage.module.scss'
 export type CoursePageProps = {
   authSession: AuthSession | null
   isProfileDropdownOpen: boolean
+  onAddCourse: (courseId: CourseId) => Promise<void>
   onLoginClick: () => void
   onLogout: () => void
   onProfileClick: () => void
   onProfileDropdownClose: () => void
   onProfileNavigate: () => void
+  onRemoveCourse: (courseId: CourseId) => Promise<void> | void
+  selectedCourseIds: CourseId[]
 }
 
 type CoursePageStatus = 'error' | 'loading' | 'notFound' | 'success'
@@ -69,11 +72,14 @@ const ctaListItems = [
 export function CoursePage({
   authSession,
   isProfileDropdownOpen,
+  onAddCourse,
   onLoginClick,
   onLogout,
   onProfileClick,
   onProfileDropdownClose,
   onProfileNavigate,
+  onRemoveCourse,
+  selectedCourseIds,
 }: CoursePageProps) {
   const { courseId } = useParams()
   const [course, setCourse] = useState<Course | null>(null)
@@ -134,9 +140,31 @@ export function CoursePage({
       ? { '--course-banner-mask-left': bannerImageMaskGeometry.left }
       : {}),
   }
-  const handleCtaButtonClick = (): void => {
+  const isCourseSelected = course ? selectedCourseIds.includes(course.id) : false
+  const ctaButtonText = !authSession
+    ? 'Войдите, чтобы добавить курс'
+    : isCourseSelected
+      ? 'Удалить курс'
+      : 'Добавить курс'
+  const handleCtaButtonClick = async (): Promise<void> => {
     if (!authSession) {
       onLoginClick()
+      return
+    }
+
+    if (!course) {
+      return
+    }
+
+    try {
+      if (isCourseSelected) {
+        await onRemoveCourse(course.id)
+        return
+      }
+
+      await onAddCourse(course.id)
+    } catch {
+      return
     }
   }
 
@@ -258,81 +286,86 @@ export function CoursePage({
               </div>
             </section>
 
-            <section
-              className={styles['course-page__directions']}
-              aria-labelledby="course-directions-title"
-            >
-              <h2 className={styles['course-page__section-title']} id="course-directions-title">
-                Направления
-              </h2>
-              <article className={styles['course-page__directions-card']}>
-                <div className={styles['course-page__directions-grid']}>
-                  {directionColumns.map((column, columnIndex) => (
-                    <ul className={styles['course-page__directions-column']} key={columnIndex}>
-                      {column.map((direction) => (
-                        <li className={styles['course-page__direction-item']} key={direction}>
-                          <span
-                            className={styles['course-page__direction-icon']}
-                            aria-hidden="true"
-                          >
-                            <img
-                              className={styles['course-page__direction-star']}
-                              src={starIcon}
-                              alt=""
-                            />
-                          </span>
-                          <span className={styles['course-page__direction-text']}>{direction}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ))}
-                </div>
-              </article>
-            </section>
-
-            <section className={styles['course-page__cta']} aria-labelledby="course-cta-title">
-              <div className={styles['course-page__cta-inner']}>
-                <div className={styles['course-page__cta-content']}>
-                  <h2 className={styles['course-page__cta-title']} id="course-cta-title">
-                    Начните путь
-                    <br />к новому телу
-                  </h2>
-                  <ul className={styles['course-page__cta-list']}>
-                    {ctaListItems.map((item) => (
-                      <li key={item}>{item}</li>
+            <section className={styles['course-page__conversion']}>
+              <section
+                className={styles['course-page__directions']}
+                aria-labelledby="course-directions-title"
+              >
+                <h2 className={styles['course-page__section-title']} id="course-directions-title">
+                  Направления
+                </h2>
+                <article className={styles['course-page__directions-card']}>
+                  <div className={styles['course-page__directions-grid']}>
+                    {directionColumns.map((column, columnIndex) => (
+                      <ul className={styles['course-page__directions-column']} key={columnIndex}>
+                        {column.map((direction) => (
+                          <li className={styles['course-page__direction-item']} key={direction}>
+                            <span
+                              className={styles['course-page__direction-icon']}
+                              aria-hidden="true"
+                            >
+                              <img
+                                className={styles['course-page__direction-star']}
+                                src={starIcon}
+                                alt=""
+                              />
+                            </span>
+                            <span className={styles['course-page__direction-text']}>
+                              {direction}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
                     ))}
-                  </ul>
-                  <button
-                    className={styles['course-page__cta-button']}
-                    type="button"
-                    onClick={handleCtaButtonClick}
-                  >
-                    <span className={styles['course-page__cta-button-text']}>
-                      Войдите, чтобы добавить курс
-                    </span>
-                  </button>
-                </div>
-                <div className={styles['course-page__cta-visual']} aria-hidden="true">
-                  <div className={styles['course-page__cta-ribbon-clip']}>
-                    <img
-                      className={styles['course-page__cta-ribbon']}
-                      src={greenRibbonImage}
-                      alt=""
-                    />
                   </div>
+                </article>
+              </section>
+
+              <div className={styles['course-page__cta-visual']} aria-hidden="true">
+                <div className={styles['course-page__cta-ribbon-clip']}>
                   <img
-                    className={styles['course-page__cta-arc']}
-                    src={arcImage}
+                    className={styles['course-page__cta-ribbon']}
+                    src={greenRibbonImage}
                     alt=""
-                    aria-hidden="true"
                   />
-                  <div className={styles['course-page__cta-man-block']} aria-hidden="true">
-                    <div className={styles['course-page__cta-man-frame']}>
-                      <img className={styles['course-page__cta-man']} src={manImage} alt="" />
-                    </div>
+                </div>
+                <img
+                  className={styles['course-page__cta-arc']}
+                  src={arcImage}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <div className={styles['course-page__cta-man-block']} aria-hidden="true">
+                  <div className={styles['course-page__cta-man-frame']}>
+                    <img className={styles['course-page__cta-man']} src={manImage} alt="" />
                   </div>
                 </div>
               </div>
+
+              <section className={styles['course-page__cta']} aria-labelledby="course-cta-title">
+                <div className={styles['course-page__cta-inner']}>
+                  <div className={styles['course-page__cta-content']}>
+                    <h2 className={styles['course-page__cta-title']} id="course-cta-title">
+                      Начните путь
+                      <br />к новому телу
+                    </h2>
+                    <ul className={styles['course-page__cta-list']}>
+                      {ctaListItems.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                    <button
+                      className={styles['course-page__cta-button']}
+                      type="button"
+                      onClick={handleCtaButtonClick}
+                    >
+                      <span className={styles['course-page__cta-button-text']}>
+                        {ctaButtonText}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </section>
             </section>
           </>
         ) : null}

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 import type { Course } from '../../model/course.types'
 import { ProfileCourseCard } from './ProfileCourseCard'
@@ -70,6 +71,22 @@ describe('ProfileCourseCard', () => {
     render(<ProfileCourseCard course={course} progressPercent={40} />)
 
     expect(screen.getByRole('button', { name: 'Удалить курс Йога' })).toBeInTheDocument()
+  })
+
+  it('handles rejected async remove callback without bubbling from click', async () => {
+    const user = userEvent.setup()
+    const handleRemoveClick = jest
+      .fn<Promise<void>, [string]>()
+      .mockRejectedValue(new Error('Fail'))
+
+    render(
+      <ProfileCourseCard course={course} onRemoveClick={handleRemoveClick} progressPercent={40} />,
+    )
+
+    await expect(
+      user.click(screen.getByRole('button', { name: 'Удалить курс Йога' })),
+    ).resolves.toBe(undefined)
+    expect(handleRemoveClick).toHaveBeenCalledWith('test-course')
   })
 
   it('keeps desktop content width from shrinking', () => {

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import type { AuthSession } from '@features/auth/model/auth-session.types'
@@ -37,6 +38,7 @@ function renderCoursesPage(
   session: AuthSession | null = null,
   onAddCourse = jest.fn<Promise<void>, [string]>(),
   selectedCourseIds: string[] = [],
+  onRemoveCourse = jest.fn<Promise<void>, [string]>(),
 ) {
   return render(
     <MemoryRouter>
@@ -44,6 +46,7 @@ function renderCoursesPage(
         authSession={session}
         isProfileDropdownOpen={false}
         onAddCourse={onAddCourse}
+        onRemoveCourse={onRemoveCourse}
         onLoginClick={jest.fn()}
         onLogout={jest.fn()}
         onProfileClick={jest.fn()}
@@ -59,6 +62,7 @@ function renderCoursesPageWithRoutes(
   session: AuthSession | null = null,
   onAddCourse = jest.fn<Promise<void>, [string]>(),
   selectedCourseIds: string[] = [],
+  onRemoveCourse = jest.fn<Promise<void>, [string]>(),
 ) {
   return render(
     <MemoryRouter initialEntries={['/']}>
@@ -70,6 +74,7 @@ function renderCoursesPageWithRoutes(
               authSession={session}
               isProfileDropdownOpen={false}
               onAddCourse={onAddCourse}
+              onRemoveCourse={onRemoveCourse}
               onLoginClick={jest.fn()}
               onLogout={jest.fn()}
               onProfileClick={jest.fn()}
@@ -83,6 +88,50 @@ function renderCoursesPageWithRoutes(
       </Routes>
     </MemoryRouter>,
   )
+}
+
+function renderCoursesPageWithSelection(initialSelectedCourseIds: string[] = []) {
+  const handleAddCourse = jest.fn<Promise<void>, [string]>().mockResolvedValue(undefined)
+  const handleRemoveCourse = jest.fn<Promise<void>, [string]>().mockResolvedValue(undefined)
+
+  function CoursesPageSelectionHarness() {
+    const [selectedCourseIds, setSelectedCourseIds] = useState(initialSelectedCourseIds)
+
+    const handleAdd = async (courseId: string): Promise<void> => {
+      await handleAddCourse(courseId)
+      setSelectedCourseIds((currentIds) =>
+        currentIds.includes(courseId) ? currentIds : [...currentIds, courseId],
+      )
+    }
+
+    const handleRemove = async (courseId: string): Promise<void> => {
+      await handleRemoveCourse(courseId)
+      setSelectedCourseIds((currentIds) => currentIds.filter((id) => id !== courseId))
+    }
+
+    return (
+      <CoursesPage
+        authSession={authSession}
+        isProfileDropdownOpen={false}
+        onAddCourse={handleAdd}
+        onRemoveCourse={handleRemove}
+        onLoginClick={jest.fn()}
+        onLogout={jest.fn()}
+        onProfileClick={jest.fn()}
+        onProfileDropdownClose={jest.fn()}
+        onProfileNavigate={jest.fn()}
+        selectedCourseIds={selectedCourseIds}
+      />
+    )
+  }
+
+  render(
+    <MemoryRouter>
+      <CoursesPageSelectionHarness />
+    </MemoryRouter>,
+  )
+
+  return { handleAddCourse, handleRemoveCourse }
 }
 
 describe('CoursesPage', () => {
@@ -157,22 +206,52 @@ describe('CoursesPage', () => {
     expect(screen.queryByTestId('location')).not.toBeInTheDocument()
   })
 
-  it('does not call add API when course is already selected', async () => {
+  it('removes selected course when minus button is clicked', async () => {
     const user = userEvent.setup()
     const handleAddCourse = jest.fn<Promise<void>, [string]>()
+    const handleRemoveCourse = jest.fn<Promise<void>, [string]>().mockResolvedValue(undefined)
     mockFetchSuccess(courseDtoItems)
 
-    renderCoursesPage(authSession, handleAddCourse, ['ab1c3f'])
+    renderCoursesPage(authSession, handleAddCourse, ['ab1c3f'], handleRemoveCourse)
 
     const selectedButton = await screen.findByRole('button', {
-      name: 'Добавить курс: Йога',
+      name: 'Удалить курс: Йога',
       pressed: true,
     })
 
     await user.click(selectedButton)
 
     expect(handleAddCourse).not.toHaveBeenCalled()
+    expect(handleRemoveCourse).toHaveBeenCalledWith('ab1c3f')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('changes course card state from plus to minus after successful add', async () => {
+    const user = userEvent.setup()
+    mockFetchSuccess(courseDtoItems)
+
+    const { handleAddCourse } = renderCoursesPageWithSelection()
+
+    await user.click(await screen.findByRole('button', { name: 'Добавить курс: Йога' }))
+
+    expect(handleAddCourse).toHaveBeenCalledWith('ab1c3f')
+    expect(
+      screen.getByRole('button', { name: 'Удалить курс: Йога', pressed: true }),
+    ).toBeInTheDocument()
+  })
+
+  it('changes course card state from minus to plus after successful remove', async () => {
+    const user = userEvent.setup()
+    mockFetchSuccess(courseDtoItems)
+
+    const { handleRemoveCourse } = renderCoursesPageWithSelection(['ab1c3f'])
+
+    await user.click(await screen.findByRole('button', { name: 'Удалить курс: Йога' }))
+
+    expect(handleRemoveCourse).toHaveBeenCalledWith('ab1c3f')
+    expect(
+      screen.getByRole('button', { name: 'Добавить курс: Йога', pressed: false }),
+    ).toBeInTheDocument()
   })
 
   it('keeps courses visible when add course API fails', async () => {

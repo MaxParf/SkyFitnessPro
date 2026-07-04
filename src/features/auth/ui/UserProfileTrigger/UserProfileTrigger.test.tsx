@@ -65,13 +65,13 @@ describe('UserProfileTrigger', () => {
       /\.user-profile-trigger__name \{[\s\S]*display: none;[\s\S]*\}/,
     )
     expect(mobileMediaBlock).toMatch(
-      /\.user-profile-trigger__avatar-icon \{[\s\S]*width: 36px;[\s\S]*height: 36px;[\s\S]*\}/,
+      /\.user-profile-trigger__avatar-icon \{[\s\S]*width: 30px;[\s\S]*height: 30px;[\s\S]*\}/,
     )
     expect(mobileMediaBlock).toMatch(
-      /\.user-profile-trigger__chevron \{[\s\S]*width: 8px;[\s\S]*height: 4px;[\s\S]*\}/,
+      /\.user-profile-trigger__chevron \{[\s\S]*width: 8px;[\s\S]*height: 4px;[\s\S]*background: url\('\.\.\/\.\.\/\.\.\/\.\.\/image\/chevron\.svg'\) center \/ 8px 4px no-repeat;[\s\S]*color: #000000;[\s\S]*\}/,
     )
     expect(mobileMediaBlock).toMatch(
-      /\.user-profile-trigger__chevron::before,\n\s{2}\.user-profile-trigger__chevron::after \{[\s\S]*width: 5px;[\s\S]*height: 2px;[\s\S]*\}/,
+      /\.user-profile-trigger__chevron::before,\n\s{2}\.user-profile-trigger__chevron::after \{[\s\S]*display: none;[\s\S]*\}/,
     )
     expect(mobileMediaBlock).not.toMatch(
       /\.user-profile-trigger__chevron \{[\s\S]*(border-bottom|border-left|transform):/,

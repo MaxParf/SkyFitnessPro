@@ -38,6 +38,9 @@ export function CourseCard({
   ]
     .filter(Boolean)
     .join(' ')
+  const courseActionLabel = isSelected
+    ? `Удалить курс: ${course.title}`
+    : `Добавить курс: ${course.title}`
 
   const handleCardClick = (): void => {
     onCardClick?.(course.id)
@@ -66,7 +69,7 @@ export function CourseCard({
       <div className={styles['course-card__image-wrapper']}>
         <img className={imageClassName} src={course.imageSrc} alt="" />
         <Button
-          aria-label={`Добавить курс: ${course.title}`}
+          aria-label={courseActionLabel}
           aria-pressed={isSelected}
           className={styles['course-card__add-button']}
           onClick={handleAddClick}

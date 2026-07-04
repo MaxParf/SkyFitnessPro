@@ -26,7 +26,7 @@ export type ProfileCourseCardProps = {
   course: Course
   onActionClick?: (courseId: CourseId) => void
   onCardClick?: (courseId: CourseId) => void
-  onRemoveClick?: (courseId: CourseId) => void
+  onRemoveClick?: (courseId: CourseId) => Promise<void> | void
   progressPercent: number
 }
 
@@ -82,7 +82,7 @@ export function ProfileCourseCard({
 
   const handleRemoveClick = (event: MouseEvent<HTMLButtonElement>): void => {
     event.stopPropagation()
-    onRemoveClick?.(course.id)
+    void Promise.resolve(onRemoveClick?.(course.id)).catch(() => undefined)
   }
 
   return (
