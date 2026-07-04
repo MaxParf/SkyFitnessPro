@@ -475,6 +475,28 @@
     object-position: center;
   }
 
+  .course-page__banner-image--yoga {
+    top: -70px;
+    left: -235px;
+  }
+
+  .course-page__banner-image--stretching {
+    top: 20px;
+    right: auto;
+    left: -230px;
+    transform: scale(1.1);
+  }
+
+  .course-page__banner-image--fitness {
+    top: -35px;
+    transform: scale(1.02);
+  }
+
+  .course-page__banner-image--bodyflex {
+    top: -120px;
+    left: -240px;
+  }
+
   .course-page__banner-image--step-aerobics {
     top: -195px;
     right: auto;

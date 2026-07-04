@@ -115,7 +115,11 @@ export function CoursePage({
       }
   const bannerImageClassName = [
     styles['course-page__banner-image'],
+    imageVariant === 'yoga' ? styles['course-page__banner-image--yoga'] : '',
+    imageVariant === 'stretching' ? styles['course-page__banner-image--stretching'] : '',
+    imageVariant === 'fitness' ? styles['course-page__banner-image--fitness'] : '',
     isStepAerobics ? styles['course-page__banner-image--step-aerobics'] : '',
+    imageVariant === 'bodyflex' ? styles['course-page__banner-image--bodyflex'] : '',
   ]
     .filter(Boolean)
     .join(' ')

@@ -487,6 +487,40 @@ describe('CoursePage', () => {
     expect(styleAttribute).not.toContain('--course-banner-image-left')
   })
 
+  it('marks bodyflex banner image for mobile position correction', async () => {
+    mockFetchSuccess(courseDtoItems)
+
+    renderCoursePage('q02a6i')
+
+    expect(await screen.findByRole('heading', { name: 'Бодифлекс' })).toBeInTheDocument()
+    const bannerImage = document.querySelector('.course-page__banner-image')
+
+    expect(bannerImage).toHaveClass('course-page__banner-image')
+    expect(bannerImage).toHaveClass('course-page__banner-image--bodyflex')
+    expect(bannerImage).not.toHaveClass('course-page__banner-image--step-aerobics')
+  })
+
+  it.each([
+    ['ab1c3f', 'Йога', 'course-page__banner-image--yoga'],
+    ['kfpq8e', 'Стретчинг', 'course-page__banner-image--stretching'],
+    ['ypox9r', 'Фитнес', 'course-page__banner-image--fitness'],
+  ])(
+    'marks %s banner image for mobile variant correction',
+    async (courseId, courseTitle, className) => {
+      mockFetchSuccess(courseDtoItems)
+
+      renderCoursePage(courseId)
+
+      expect(await screen.findByRole('heading', { name: courseTitle })).toBeInTheDocument()
+      const bannerImage = document.querySelector('.course-page__banner-image')
+
+      expect(bannerImage).toHaveClass('course-page__banner-image')
+      expect(bannerImage).toHaveClass(className)
+      expect(bannerImage).not.toHaveClass('course-page__banner-image--step-aerobics')
+      expect(bannerImage).not.toHaveClass('course-page__banner-image--bodyflex')
+    },
+  )
+
   it('uses step-aerobics banner image mask crop geometry', async () => {
     mockFetchSuccess(courseDtoItems)
 
@@ -884,6 +918,24 @@ describe('CoursePage', () => {
     height: 557px;
     transform: none;
     object-position: center;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__banner-image--yoga {
+    top: -70px;
+    left: -235px;
+  }`)
+    expect(mobileBlock).toContain(`.course-page__banner-image--stretching {
+    top: 20px;
+    right: auto;
+    left: -230px;
+    transform: scale(1.1);
+  }`)
+    expect(mobileBlock).toContain(`.course-page__banner-image--fitness {
+    top: -35px;
+    transform: scale(1.02);
+  }`)
+    expect(mobileBlock).toContain(`.course-page__banner-image--bodyflex {
+    top: -120px;
+    left: -240px;
   }`)
     expect(mobileBlock).toContain(`.course-page__suitable-card {
     flex: none;
