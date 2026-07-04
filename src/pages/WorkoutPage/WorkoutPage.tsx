@@ -286,33 +286,42 @@ export function WorkoutPage({
 
         <article className={styles['workout-page__exercises-card']}>
           <div className={styles['workout-page__exercises-content']}>
-            <h2 className={styles['workout-page__exercises-title']}>
-              Упражнения {workout.name.toLowerCase()}
-            </h2>
+            <div className={styles['workout-page__exercises-main']}>
+              <h2 className={styles['workout-page__exercises-title']}>
+                Упражнения {workout.name.toLowerCase()}
+              </h2>
 
-            {workout.exercises.length > 0 ? (
-              <div className={styles['workout-page__exercises-grid']}>
-                {exerciseColumns.map((column, columnIndex) => (
-                  <div className={styles['workout-page__exercise-column']} key={columnIndex}>
-                    {column.map((exercise) => (
-                      <div className={styles['workout-page__exercise']} key={exercise.id}>
-                        <p className={styles['workout-page__exercise-text']}>
-                          {exercise.name} {exercise.progressPercent}%
-                        </p>
-                        <div className={styles['workout-page__exercise-track']} aria-hidden="true">
-                          <div
-                            className={styles['workout-page__exercise-track-fill']}
-                            style={getExerciseProgressStyle(exercise.progressPercent)}
-                          />
-                        </div>
+              {workout.exercises.length > 0 ? (
+                <div className={styles['workout-page__exercises-list']}>
+                  <div className={styles['workout-page__exercises-grid']}>
+                    {exerciseColumns.map((column, columnIndex) => (
+                      <div className={styles['workout-page__exercise-column']} key={columnIndex}>
+                        {column.map((exercise) => (
+                          <div className={styles['workout-page__exercise']} key={exercise.id}>
+                            <p className={styles['workout-page__exercise-text']}>
+                              {exercise.name} {exercise.progressPercent}%
+                            </p>
+                            <div
+                              className={styles['workout-page__exercise-track']}
+                              aria-hidden="true"
+                            >
+                              <div
+                                className={styles['workout-page__exercise-track-fill']}
+                                style={getExerciseProgressStyle(exercise.progressPercent)}
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="Для этой тренировки пока нет упражнений." />
-            )}
+                </div>
+              ) : (
+                <div className={styles['workout-page__exercises-list']}>
+                  <EmptyState title="Для этой тренировки пока нет упражнений." />
+                </div>
+              )}
+            </div>
 
             <button
               className={styles['workout-page__progress-button']}

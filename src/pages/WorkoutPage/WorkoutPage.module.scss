@@ -103,6 +103,11 @@
   display: contents;
 }
 
+.workout-page__exercises-main,
+.workout-page__exercises-list {
+  display: contents;
+}
+
 .workout-page__exercises-title {
   margin: 0;
   color: #000000;
@@ -210,26 +215,50 @@
 
 @media (max-width: 767px) {
   .workout-page {
-    padding: 40px 0 40px;
+    padding: 39px 0 40px;
   }
 
   .workout-page__container {
+    width: 343px;
     max-width: calc(100% - 32px);
+    box-sizing: border-box;
+    flex-direction: column;
     gap: 24px;
   }
 
   .workout-page__title-block {
+    width: 343px;
+    max-width: 100%;
+    flex-direction: column;
     min-height: 26px;
-    gap: 0;
+    gap: 10px;
   }
 
   .workout-page__title {
+    width: 343px;
+    max-width: 100%;
     font-size: 24px;
     line-height: 26px;
   }
 
+  .workout-page__video {
+    width: 343px;
+    max-width: 100%;
+    height: 189px;
+  }
+
   .workout-page__video-preview {
-    border-radius: 20px;
+    width: 100%;
+    height: 189px;
+    border-radius: 8.87px;
+    aspect-ratio: auto;
+  }
+
+  .workout-page__video-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 8.87px;
+    object-fit: cover;
   }
 
   .workout-page__play-button {
@@ -247,17 +276,31 @@
   }
 
   .workout-page__exercises-card {
+    width: 343px;
+    max-width: 100%;
+    box-sizing: border-box;
+    gap: 24px;
     padding: 30px;
-    border-radius: 24px;
+    border-radius: 30px;
     margin-bottom: 40px;
+    box-shadow: 0 4px 67px -12px #00000021;
   }
 
   .workout-page__exercises-content {
     display: flex;
     width: 100%;
     max-width: 283px;
+    box-sizing: border-box;
     flex-direction: column;
     gap: 40px;
+  }
+
+  .workout-page__exercises-main {
+    display: flex;
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    gap: 20px;
   }
 
   .workout-page__exercises-title {
@@ -270,21 +313,27 @@
     line-height: 35px;
   }
 
+  .workout-page__exercises-list {
+    display: flex;
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    gap: 24px;
+  }
+
   .workout-page__exercises-grid {
     width: 100%;
     max-width: 283px;
+    display: flex;
+    height: auto;
+    flex-direction: column;
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 10px;
     margin-top: 0;
   }
 
-  .workout-page__exercise-column,
-  .workout-page__progress-button,
-  .workout-page__return-link {
-    width: 100%;
-  }
-
   .workout-page__exercise-column {
+    width: 100%;
     max-width: 283px;
   }
 
@@ -306,5 +355,22 @@
     width: 283px;
     height: 6px;
     border-radius: 50px;
+  }
+
+  .workout-page__exercise-track-fill {
+    width: 113.2px;
+    height: 6px;
+    border-radius: 50px;
+    background: #00c1ff;
+  }
+
+  .workout-page__progress-button,
+  .workout-page__return-link {
+    width: 100%;
+    min-height: 52px;
+    gap: 10px;
+    padding: 16px 26px;
+    border-radius: 46px;
+    background: #bcec30;
   }
 }
