@@ -1,0 +1,38 @@
+.meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-card-meta-bg);
+  color: var(--color-text-dark);
+}
+
+.meta-badge__text {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .meta-badge {
+    box-sizing: border-box;
+    min-height: 38px;
+    align-items: center;
+    padding: 10px;
+    border-radius: 50px;
+    gap: 6px;
+  }
+
+  .meta-badge__icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .meta-badge__text {
+    font-size: 16px;
+    line-height: 18px;
+  }
+}

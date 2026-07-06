@@ -23,7 +23,8 @@
       "@features/*": ["src/features/*"],
       "@entities/*": ["src/entities/*"],
       "@shared/*": ["src/shared/*"],
-      "@assets/*": ["src/shared/assets/*"]
+      "@assets/*": ["src/shared/assets/*"],
+      "@image/*": ["src/image/*"]
     },
 
     /* Linting */
@@ -35,5 +36,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/setupTests.ts"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/setupTests.ts", "src/test"]
 }

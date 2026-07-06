@@ -1,0 +1,59 @@
+@use '@shared/styles/mixins' as *;
+
+.button {
+  @include focus-visible;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.button--primary {
+  min-height: 52px;
+  padding: 14px 28px;
+  background-color: var(--color-green-accent);
+  color: var(--color-black);
+}
+
+.button--primary:hover:not(:disabled) {
+  background-color: var(--color-green-hover);
+}
+
+.button--secondary {
+  min-height: 52px;
+  padding: 14px 28px;
+  background-color: var(--color-white);
+  color: var(--color-black);
+}
+
+.button--secondary:hover:not(:disabled) {
+  background-color: var(--color-card-meta-bg);
+}
+
+.button--icon {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  background-color: var(--color-white);
+  color: var(--color-black);
+}
+
+.button--icon:hover:not(:disabled) {
+  background-color: var(--color-green-accent);
+}
+
+.button--disabled,
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

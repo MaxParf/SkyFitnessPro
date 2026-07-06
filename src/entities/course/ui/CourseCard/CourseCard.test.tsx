@@ -1,0 +1,62 @@
+import { render, screen } from '@testing-library/react'
+
+import type { Course } from '../../model/course.types'
+import { CourseCard } from './CourseCard'
+
+const course: Course = {
+  dailyDurationLabel: '10-30 мин/день',
+  description: 'Описание курса',
+  difficultyLabel: 'Начальный',
+  directions: ['Дыхание'],
+  durationLabel: '20 дней',
+  fitting: ['Новичкам'],
+  id: 'test-course',
+  imageSrc: '/image.jpg',
+  imageVariant: 'yoga',
+  title: 'Йога',
+  workoutIds: ['workout-1'],
+}
+
+describe('CourseCard', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it('renders course title', () => {
+    render(<CourseCard course={course} />)
+
+    expect(screen.getByRole('heading', { name: 'Йога' })).toBeInTheDocument()
+  })
+
+  it('renders accessible add button label', () => {
+    render(<CourseCard course={course} />)
+
+    expect(screen.getByRole('button', { name: 'Добавить курс: Йога' })).toBeInTheDocument()
+  })
+
+  it('marks add button as not pressed when course is not selected', () => {
+    render(<CourseCard course={course} />)
+
+    expect(
+      screen.getByRole('button', { name: 'Добавить курс: Йога', pressed: false }),
+    ).toBeInTheDocument()
+  })
+
+  it('marks add button as pressed when course is selected', () => {
+    render(<CourseCard course={course} isSelected />)
+
+    expect(
+      screen.getByRole('button', { name: 'Удалить курс: Йога', pressed: true }),
+    ).toBeInTheDocument()
+  })
+
+  it('does not fetch progress independently', () => {
+    const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    render(<CourseCard course={course} isSelected />)
+
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
