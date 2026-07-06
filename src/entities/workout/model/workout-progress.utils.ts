@@ -73,24 +73,35 @@ export function calculateWorkoutProgressPercent(params: WorkoutProgressCalculati
   return Math.round(totalPercent / params.exercises.length)
 }
 
-export function calculateCourseProgressPercent(params: CourseProgressCalculationInput): number {
-  const allExercisePercents = params.workouts.flatMap((workout) =>
-    workout.exercises.map((exercise, index) =>
+export function isWorkoutFullyCompleted(params: WorkoutProgressCalculationInput): boolean {
+  if (params.exercises.length === 0) {
+    return false
+  }
+
+  if (params.workoutCompleted === true) {
+    return true
+  }
+
+  return params.exercises.every((exercise, index) => {
+    return (
       calculateExerciseProgressPercent({
         difficultyLevel: defaultDifficultyLevel,
         maxValue: getExerciseMaxValue(exercise),
-        value: workout.progressData?.[index] ?? 0,
-      }),
-    ),
-  )
+        value: params.progressData?.[index] ?? 0,
+      }) >= 100
+    )
+  })
+}
 
-  if (allExercisePercents.length === 0) {
+export function calculateCourseProgressPercent(params: CourseProgressCalculationInput): number {
+  if (params.workouts.length === 0) {
     return 0
   }
 
-  const totalPercent = allExercisePercents.reduce((sum, percent) => sum + percent, 0)
+  const completedWorkoutsCount = params.workouts.filter(isWorkoutFullyCompleted).length
+  const progressPercent = Math.round((completedWorkoutsCount / params.workouts.length) * 100)
 
-  return Math.round(totalPercent / allExercisePercents.length)
+  return Math.min(100, Math.max(0, progressPercent))
 }
 
 export function getCourseIdByWorkoutId(workoutId: WorkoutId): CourseId | null {

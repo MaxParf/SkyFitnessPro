@@ -29,6 +29,7 @@ export type WorkoutProgressSavePayload = {
 export type WorkoutProgressCalculationInput = {
   exercises: Pick<WorkoutExercise, 'quantity'>[]
   progressData?: number[]
+  workoutCompleted?: boolean
 }
 
 export type CourseProgressCalculationInput = {

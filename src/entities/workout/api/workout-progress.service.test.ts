@@ -75,7 +75,7 @@ describe('workout-progress.service', () => {
     ).resolves.toEqual({})
   })
 
-  it('loads all course workouts and calculates full course progress conservatively', async () => {
+  it('loads all course workouts and calculates progress from completed workouts only', async () => {
     const fetchMock = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
       .mockResolvedValueOnce(
@@ -115,6 +115,45 @@ describe('workout-progress.service', () => {
 
     Object.assign(globalThis, { fetch: fetchMock })
 
-    await expect(loadCourseProgressPercent('jwt-token', 'course-1')).resolves.toBe(25)
+    await expect(loadCourseProgressPercent('jwt-token', 'course-1')).resolves.toBe(50)
+  })
+
+  it('deduplicates concurrent course progress requests for the same token and course', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(
+        createJsonResponse([
+          {
+            _id: 'workout-1',
+            exercises: [{ _id: 'exercise-1', name: 'Упражнение 1', quantity: 10 }],
+            name: 'Тренировка 1',
+            video: 'https://www.youtube.com/embed/video1',
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          progressData: [10],
+          workoutCompleted: true,
+          workoutId: 'workout-1',
+        }),
+      )
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    await expect(
+      Promise.all([
+        loadCourseProgressPercent('jwt-token', 'course-1'),
+        loadCourseProgressPercent('jwt-token', 'course-1'),
+      ]),
+    ).resolves.toEqual([100, 100])
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/workouts'))).toHaveLength(
+      1,
+    )
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/progress'))).toHaveLength(
+      1,
+    )
   })
 })

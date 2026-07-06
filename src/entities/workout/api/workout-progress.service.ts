@@ -9,6 +9,8 @@ import { loadCourseWorkouts } from './workout.service'
 import type { WorkoutProgress, WorkoutProgressSavePayload } from '../model/workout-progress.types'
 import { calculateCourseProgressPercent } from '../model/workout-progress.utils'
 
+const courseProgressRequests = new Map<string, Promise<number>>()
+
 export function loadWorkoutProgress(
   token: string,
   courseId: string,
@@ -52,6 +54,31 @@ export async function loadCourseProgressPercent(
   courseId: string,
   signal?: AbortSignal,
 ): Promise<number> {
+  if (!signal) {
+    const requestKey = `${token}:${courseId}`
+    const pendingRequest = courseProgressRequests.get(requestKey)
+
+    if (pendingRequest) {
+      return pendingRequest
+    }
+
+    const request = loadCourseProgressPercentOnce(token, courseId).finally(() => {
+      courseProgressRequests.delete(requestKey)
+    })
+
+    courseProgressRequests.set(requestKey, request)
+
+    return request
+  }
+
+  return loadCourseProgressPercentOnce(token, courseId, signal)
+}
+
+async function loadCourseProgressPercentOnce(
+  token: string,
+  courseId: string,
+  signal?: AbortSignal,
+): Promise<number> {
   const workouts = await loadCourseWorkouts(token, courseId, signal)
   const workoutProgressItems = await Promise.all(
     workouts.map((workout) =>
@@ -68,6 +95,7 @@ export async function loadCourseProgressPercent(
     workouts: workouts.map((workout, index) => ({
       exercises: workout.exercises,
       progressData: workoutProgressItems[index]?.progressData ?? [],
+      workoutCompleted: workoutProgressItems[index]?.workoutCompleted ?? false,
     })),
   })
 }

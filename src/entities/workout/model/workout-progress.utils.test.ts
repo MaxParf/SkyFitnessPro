@@ -2,6 +2,7 @@ import {
   calculateCourseProgressPercent,
   calculateExerciseProgressPercent,
   calculateWorkoutProgressPercent,
+  isWorkoutFullyCompleted,
 } from './workout-progress.utils'
 
 describe('workout-progress.utils', () => {
@@ -15,7 +16,21 @@ describe('workout-progress.utils', () => {
     ).toBe(50)
   })
 
-  it('calculates 20% for a five-workout course when only one workout is complete', () => {
+  it('returns 0% when zero of five workouts are complete', () => {
+    expect(
+      calculateCourseProgressPercent({
+        workouts: [
+          { exercises: [{ quantity: 10 }], progressData: [5] },
+          { exercises: [{ quantity: 10 }] },
+          { exercises: [{ quantity: 10 }] },
+          { exercises: [{ quantity: 10 }] },
+          { exercises: [{ quantity: 10 }] },
+        ],
+      }),
+    ).toBe(0)
+  })
+
+  it('returns 20% when one of five workouts is complete', () => {
     expect(
       calculateCourseProgressPercent({
         workouts: [
@@ -29,29 +44,47 @@ describe('workout-progress.utils', () => {
     ).toBe(20)
   })
 
-  it('weights course progress by exercise count rather than workout count', () => {
+  it('returns 40% when two of five workouts are complete', () => {
     expect(
       calculateCourseProgressPercent({
         workouts: [
           { exercises: [{ quantity: 10 }], progressData: [10] },
-          {
-            exercises: [{ quantity: 10 }, { quantity: 10 }, { quantity: 10 }],
-            progressData: [0, 0, 0],
-          },
-        ],
-      }),
-    ).toBe(25)
-  })
-
-  it('counts missing workout progressData as zero', () => {
-    expect(
-      calculateCourseProgressPercent({
-        workouts: [
           { exercises: [{ quantity: 10 }], progressData: [10] },
+          { exercises: [{ quantity: 10 }] },
+          { exercises: [{ quantity: 10 }] },
           { exercises: [{ quantity: 10 }] },
         ],
       }),
-    ).toBe(50)
+    ).toBe(40)
+  })
+
+  it('returns 100% when five of five workouts are complete', () => {
+    expect(
+      calculateCourseProgressPercent({
+        workouts: [
+          { exercises: [{ quantity: 10 }], progressData: [10] },
+          { exercises: [{ quantity: 10 }], progressData: [10] },
+          { exercises: [{ quantity: 10 }], progressData: [10] },
+          { exercises: [{ quantity: 10 }], progressData: [10] },
+          { exercises: [{ quantity: 10 }], progressData: [10] },
+        ],
+      }),
+    ).toBe(100)
+  })
+
+  it('does not count partial workout progress as completed course progress', () => {
+    expect(
+      calculateCourseProgressPercent({
+        workouts: [
+          { exercises: [{ quantity: 10 }, { quantity: 10 }], progressData: [10, 5] },
+          { exercises: [{ quantity: 10 }], progressData: [5] },
+        ],
+      }),
+    ).toBe(0)
+  })
+
+  it('returns 0% when total workouts count is zero', () => {
+    expect(calculateCourseProgressPercent({ workouts: [] })).toBe(0)
   })
 
   it('counts missing progress items inside progressData as zero and ignores extra values', () => {
@@ -78,5 +111,15 @@ describe('workout-progress.utils', () => {
         ],
       }),
     ).toBe(100)
+  })
+
+  it('can use API workoutCompleted flag as completed workout data', () => {
+    expect(
+      isWorkoutFullyCompleted({
+        exercises: [{ quantity: 10 }],
+        progressData: [],
+        workoutCompleted: true,
+      }),
+    ).toBe(true)
   })
 })
