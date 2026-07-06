@@ -35,3 +35,8 @@ export type WorkoutProgressCalculationInput = {
 export type CourseProgressCalculationInput = {
   workouts: WorkoutProgressCalculationInput[]
 }
+
+export type CompletedWorkoutsCourseProgressCalculationInput = {
+  completedWorkoutsCount: number
+  totalWorkoutsCount: number
+}

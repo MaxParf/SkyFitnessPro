@@ -2,6 +2,7 @@ import { courseMockItems } from '@entities/course/model/course.mock'
 import type { CourseId } from '@entities/course/model/course.types'
 
 import type {
+  CompletedWorkoutsCourseProgressCalculationInput,
   CourseProgressCalculationInput,
   DifficultyLevel,
   ExerciseProgressInput,
@@ -99,7 +100,27 @@ export function calculateCourseProgressPercent(params: CourseProgressCalculation
   }
 
   const completedWorkoutsCount = params.workouts.filter(isWorkoutFullyCompleted).length
-  const progressPercent = Math.round((completedWorkoutsCount / params.workouts.length) * 100)
+
+  return calculateCourseProgressByCompletedWorkouts({
+    completedWorkoutsCount,
+    totalWorkoutsCount: params.workouts.length,
+  })
+}
+
+export function calculateCourseProgressByCompletedWorkouts({
+  completedWorkoutsCount,
+  totalWorkoutsCount,
+}: CompletedWorkoutsCourseProgressCalculationInput): number {
+  if (
+    !Number.isFinite(totalWorkoutsCount) ||
+    totalWorkoutsCount <= 0 ||
+    !Number.isFinite(completedWorkoutsCount) ||
+    completedWorkoutsCount <= 0
+  ) {
+    return 0
+  }
+
+  const progressPercent = Math.round((completedWorkoutsCount / totalWorkoutsCount) * 100)
 
   return Math.min(100, Math.max(0, progressPercent))
 }

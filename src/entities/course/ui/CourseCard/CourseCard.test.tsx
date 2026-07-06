@@ -18,6 +18,10 @@ const course: Course = {
 }
 
 describe('CourseCard', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('renders course title', () => {
     render(<CourseCard course={course} />)
 
@@ -44,5 +48,15 @@ describe('CourseCard', () => {
     expect(
       screen.getByRole('button', { name: 'Удалить курс: Йога', pressed: true }),
     ).toBeInTheDocument()
+  })
+
+  it('does not fetch progress independently', () => {
+    const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    render(<CourseCard course={course} isSelected />)
+
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

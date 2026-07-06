@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 
@@ -13,6 +13,19 @@ const courseDtoItems = [
     fitting: [],
     nameEN: 'Yoga',
     nameRU: 'Йога',
+    workouts: [],
+  },
+]
+
+const selectedCourseDtoItems = [
+  ...courseDtoItems,
+  {
+    _id: '6i67sm',
+    description: 'Стретчинг',
+    directions: [],
+    fitting: [],
+    nameEN: 'Stretching',
+    nameRU: 'Стретчинг',
     workouts: [],
   },
 ]
@@ -37,6 +50,136 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Начните заниматься спортом/i })).toBeInTheDocument()
     expect(await screen.findAllByRole('article')).toHaveLength(1)
     expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument()
+  })
+
+  it('does not load workout-level progress for selected courses on courses page render', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockImplementation((input) => {
+        const url = String(input)
+
+        if (url.endsWith('/users/me')) {
+          return Promise.resolve(
+            createJsonResponse({
+              user: {
+                email: 'ivan@example.com',
+                selectedCourses: ['ab1c3f', '6i67sm'],
+              },
+            }),
+          )
+        }
+
+        if (url.endsWith('/courses')) {
+          return Promise.resolve(createJsonResponse(selectedCourseDtoItems))
+        }
+
+        return Promise.resolve(createJsonResponse([]))
+      })
+
+    Object.assign(globalThis, { fetch: fetchMock })
+    window.localStorage.setItem(
+      'skyfitnesspro.auth',
+      JSON.stringify({
+        email: 'ivan@example.com',
+        token: 'jwt-token',
+        username: 'ivan',
+      }),
+    )
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Йога' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Стретчинг' })).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/users/me'))).toBe(true)
+    })
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/workouts'))).toBe(false)
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/progress'))).toBe(false)
+  })
+
+  it('loads bounded course-level progress on profile without per-workout progress requests', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockImplementation((input) => {
+        const url = String(input)
+
+        if (url.endsWith('/users/me')) {
+          return Promise.resolve(
+            createJsonResponse({
+              user: {
+                email: 'ivan@example.com',
+                selectedCourses: ['ab1c3f', '6i67sm'],
+              },
+            }),
+          )
+        }
+
+        if (url.endsWith('/users/me/progress?courseId=ab1c3f')) {
+          return Promise.resolve(
+            createJsonResponse({
+              courseId: 'ab1c3f',
+              workoutsProgress: [
+                {
+                  workoutCompleted: true,
+                  workoutId: '3yvozj',
+                },
+              ],
+            }),
+          )
+        }
+
+        if (url.endsWith('/users/me/progress?courseId=6i67sm')) {
+          return Promise.resolve(
+            createJsonResponse({
+              courseId: '6i67sm',
+              workoutsProgress: [
+                {
+                  workoutCompleted: true,
+                  workoutId: 'e9ghsb',
+                },
+                {
+                  workoutCompleted: true,
+                  workoutId: 'a1rqtt',
+                },
+              ],
+            }),
+          )
+        }
+
+        return Promise.resolve(createJsonResponse([]))
+      })
+
+    Object.assign(globalThis, { fetch: fetchMock })
+    window.localStorage.setItem(
+      'skyfitnesspro.auth',
+      JSON.stringify({
+        email: 'ivan@example.com',
+        token: 'jwt-token',
+        username: 'ivan',
+      }),
+    )
+
+    render(
+      <MemoryRouter initialEntries={['/profile']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Прогресс 20%')).toBeInTheDocument()
+    expect(await screen.findByText('Прогресс 50%')).toBeInTheDocument()
+
+    const progressCalls = fetchMock.mock.calls.filter(([url]) =>
+      String(url).includes('/users/me/progress?courseId='),
+    )
+
+    expect(progressCalls).toHaveLength(2)
+    expect(progressCalls.some(([url]) => String(url).includes('workoutId='))).toBe(false)
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/workouts'))).toBe(false)
   })
 
   it('recomputes profile course progress across all course workouts after workout save', async () => {
@@ -127,6 +270,21 @@ describe('App', () => {
               progressData: [],
               workoutCompleted: false,
               workoutId: url.split('workoutId=')[1] ?? '',
+            }),
+          )
+        }
+
+        if (url.endsWith('/users/me/progress?courseId=ab1c3f')) {
+          return Promise.resolve(
+            createJsonResponse({
+              courseId: 'ab1c3f',
+              workoutsProgress: [
+                {
+                  progressData: isWorkoutProgressSaved ? [10] : [],
+                  workoutCompleted: isWorkoutProgressSaved,
+                  workoutId: '3yvozj',
+                },
+              ],
             }),
           )
         }

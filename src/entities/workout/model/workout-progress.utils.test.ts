@@ -1,4 +1,5 @@
 import {
+  calculateCourseProgressByCompletedWorkouts,
   calculateCourseProgressPercent,
   calculateExerciseProgressPercent,
   calculateWorkoutProgressPercent,
@@ -85,6 +86,15 @@ describe('workout-progress.utils', () => {
 
   it('returns 0% when total workouts count is zero', () => {
     expect(calculateCourseProgressPercent({ workouts: [] })).toBe(0)
+  })
+
+  it('calculates course progress from completed workouts count', () => {
+    expect(
+      calculateCourseProgressByCompletedWorkouts({
+        completedWorkoutsCount: 2,
+        totalWorkoutsCount: 5,
+      }),
+    ).toBe(40)
   })
 
   it('counts missing progress items inside progressData as zero and ignores extra values', () => {

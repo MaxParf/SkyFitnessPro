@@ -37,6 +37,10 @@ function getRuleBlock(stylesheet: string, selector: string): string {
 }
 
 describe('ProfileCourseCard', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('renders course title', () => {
     render(<ProfileCourseCard course={course} progressPercent={40} />)
 
@@ -71,6 +75,16 @@ describe('ProfileCourseCard', () => {
     render(<ProfileCourseCard course={course} progressPercent={40} />)
 
     expect(screen.getByRole('button', { name: 'Удалить курс Йога' })).toBeInTheDocument()
+  })
+
+  it('does not fetch progress independently', () => {
+    const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    render(<ProfileCourseCard course={course} progressPercent={40} />)
+
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('handles rejected async remove callback without bubbling from click', async () => {

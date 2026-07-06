@@ -75,67 +75,57 @@ describe('workout-progress.service', () => {
     ).resolves.toEqual({})
   })
 
-  it('loads all course workouts and calculates progress from completed workouts only', async () => {
+  it('loads course progress once and calculates progress from completed workout flags only', async () => {
     const fetchMock = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
       .mockResolvedValueOnce(
-        createJsonResponse([
-          {
-            _id: 'workout-1',
-            exercises: [{ _id: 'exercise-1', name: 'Упражнение 1', quantity: 10 }],
-            name: 'Тренировка 1',
-            video: 'https://www.youtube.com/embed/video1',
-          },
-          {
-            _id: 'workout-2',
-            exercises: [
-              { _id: 'exercise-2', name: 'Упражнение 2', quantity: 10 },
-              { _id: 'exercise-3', name: 'Упражнение 3', quantity: 10 },
-              { _id: 'exercise-4', name: 'Упражнение 4', quantity: 10 },
-            ],
-            name: 'Тренировка 2',
-            video: 'https://www.youtube.com/embed/video2',
-          },
-        ]),
-      )
-      .mockResolvedValueOnce(
         createJsonResponse({
-          progressData: [10],
-          workoutCompleted: true,
-          workoutId: 'workout-1',
-        }),
-      )
-      .mockResolvedValueOnce(
-        createJsonResponse({
-          progressData: [],
-          workoutCompleted: false,
-          workoutId: 'workout-2',
+          courseId: 'ab1c3f',
+          workoutsProgress: [
+            {
+              progressData: [10],
+              workoutCompleted: true,
+              workoutId: '3yvozj',
+            },
+            {
+              progressData: [10],
+              workoutCompleted: false,
+              workoutId: 'hfgxlo',
+            },
+          ],
         }),
       )
 
     Object.assign(globalThis, { fetch: fetchMock })
 
-    await expect(loadCourseProgressPercent('jwt-token', 'course-1')).resolves.toBe(50)
+    await expect(loadCourseProgressPercent('jwt-token', 'ab1c3f')).resolves.toBe(20)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://webdev-hw-api.herokuapp.com/api/fitness/users/me/progress?courseId=ab1c3f',
+      {
+        headers: { Authorization: 'Bearer jwt-token' },
+        method: 'GET',
+        signal: undefined,
+      },
+    )
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/workouts'))).toBe(false)
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('workoutId='))).toBe(false)
   })
 
   it('deduplicates concurrent course progress requests for the same token and course', async () => {
     const fetchMock = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
       .mockResolvedValueOnce(
-        createJsonResponse([
-          {
-            _id: 'workout-1',
-            exercises: [{ _id: 'exercise-1', name: 'Упражнение 1', quantity: 10 }],
-            name: 'Тренировка 1',
-            video: 'https://www.youtube.com/embed/video1',
-          },
-        ]),
-      )
-      .mockResolvedValueOnce(
         createJsonResponse({
-          progressData: [10],
-          workoutCompleted: true,
-          workoutId: 'workout-1',
+          courseId: 'ab1c3f',
+          workoutsProgress: [
+            {
+              progressData: [10],
+              workoutCompleted: true,
+              workoutId: '3yvozj',
+            },
+          ],
         }),
       )
 
@@ -148,12 +138,78 @@ describe('workout-progress.service', () => {
       ]),
     ).resolves.toEqual([100, 100])
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/workouts'))).toHaveLength(
-      1,
+      0,
     )
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/progress'))).toHaveLength(
       1,
     )
+  })
+
+  it('deduplicates concurrent workout progress requests for the same token, course and workout', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          progressData: [10],
+          workoutCompleted: true,
+          workoutId: 'workout-1',
+        }),
+      )
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    await expect(
+      Promise.all([
+        loadWorkoutProgress('jwt-token', 'course-1', 'workout-1'),
+        loadWorkoutProgress('jwt-token', 'course-1', 'workout-1'),
+      ]),
+    ).resolves.toEqual([
+      {
+        courseId: 'course-1',
+        progressData: [10],
+        workoutCompleted: true,
+        workoutId: 'workout-1',
+      },
+      {
+        courseId: 'course-1',
+        progressData: [10],
+        workoutCompleted: true,
+        workoutId: 'workout-1',
+      },
+    ])
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows a new workout progress request after the previous one settles', async () => {
+    const fetchMock = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          progressData: [10],
+          workoutCompleted: true,
+          workoutId: 'workout-1',
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          progressData: [0],
+          workoutCompleted: false,
+          workoutId: 'workout-1',
+        }),
+      )
+
+    Object.assign(globalThis, { fetch: fetchMock })
+
+    await expect(loadWorkoutProgress('jwt-token', 'course-1', 'workout-1')).resolves.toMatchObject({
+      progressData: [10],
+    })
+    await expect(loadWorkoutProgress('jwt-token', 'course-1', 'workout-1')).resolves.toMatchObject({
+      progressData: [0],
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 })

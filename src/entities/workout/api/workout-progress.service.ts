@@ -1,15 +1,19 @@
 import { requestFitnessApi } from '@shared/api/fitnessApi'
+import { deduplicateInFlightRequest } from '@shared/api/inFlightRequestDedup'
 import type {
+  CourseProgressDto,
   WorkoutProgressDto,
   WorkoutProgressSaveRequestDto,
   WorkoutProgressSaveResponseDto,
 } from '@shared/api/types/workout-progress.dto'
 
-import { loadCourseWorkouts } from './workout.service'
+import { courseMockItems } from '@entities/course/model/course.mock'
+
 import type { WorkoutProgress, WorkoutProgressSavePayload } from '../model/workout-progress.types'
-import { calculateCourseProgressPercent } from '../model/workout-progress.utils'
+import { calculateCourseProgressByCompletedWorkouts } from '../model/workout-progress.utils'
 
 const courseProgressRequests = new Map<string, Promise<number>>()
+const workoutProgressRequests = new Map<string, Promise<WorkoutProgress>>()
 
 export function loadWorkoutProgress(
   token: string,
@@ -17,18 +21,23 @@ export function loadWorkoutProgress(
   workoutId: string,
   signal?: AbortSignal,
 ): Promise<WorkoutProgress> {
-  return requestFitnessApi<WorkoutProgressDto>(
-    `/users/me/progress?courseId=${courseId}&workoutId=${workoutId}`,
-    {
-      signal,
-      token,
-    },
-  ).then((progress) => ({
-    courseId,
-    progressData: Array.isArray(progress.progressData) ? progress.progressData : [],
-    workoutCompleted: Boolean(progress.workoutCompleted),
-    workoutId: progress.workoutId ?? workoutId,
-  }))
+  return deduplicateInFlightRequest({
+    key: `${token}:${courseId}:${workoutId}`,
+    request: () =>
+      requestFitnessApi<WorkoutProgressDto>(
+        `/users/me/progress?courseId=${courseId}&workoutId=${workoutId}`,
+        {
+          token,
+        },
+      ).then((progress) => ({
+        courseId,
+        progressData: Array.isArray(progress.progressData) ? progress.progressData : [],
+        workoutCompleted: Boolean(progress.workoutCompleted),
+        workoutId: progress.workoutId ?? workoutId,
+      })),
+    requests: workoutProgressRequests,
+    signal,
+  })
 }
 
 export function saveWorkoutProgress(
@@ -54,24 +63,12 @@ export async function loadCourseProgressPercent(
   courseId: string,
   signal?: AbortSignal,
 ): Promise<number> {
-  if (!signal) {
-    const requestKey = `${token}:${courseId}`
-    const pendingRequest = courseProgressRequests.get(requestKey)
-
-    if (pendingRequest) {
-      return pendingRequest
-    }
-
-    const request = loadCourseProgressPercentOnce(token, courseId).finally(() => {
-      courseProgressRequests.delete(requestKey)
-    })
-
-    courseProgressRequests.set(requestKey, request)
-
-    return request
-  }
-
-  return loadCourseProgressPercentOnce(token, courseId, signal)
+  return deduplicateInFlightRequest({
+    key: `${token}:${courseId}`,
+    request: () => loadCourseProgressPercentOnce(token, courseId),
+    requests: courseProgressRequests,
+    signal,
+  })
 }
 
 async function loadCourseProgressPercentOnce(
@@ -79,23 +76,24 @@ async function loadCourseProgressPercentOnce(
   courseId: string,
   signal?: AbortSignal,
 ): Promise<number> {
-  const workouts = await loadCourseWorkouts(token, courseId, signal)
-  const workoutProgressItems = await Promise.all(
-    workouts.map((workout) =>
-      loadWorkoutProgress(token, courseId, workout.id, signal).catch(() => ({
-        courseId,
-        progressData: [],
-        workoutCompleted: false,
-        workoutId: workout.id,
-      })),
-    ),
+  const progress = await requestFitnessApi<CourseProgressDto>(
+    `/users/me/progress?courseId=${courseId}`,
+    {
+      signal,
+      token,
+    },
   )
 
-  return calculateCourseProgressPercent({
-    workouts: workouts.map((workout, index) => ({
-      exercises: workout.exercises,
-      progressData: workoutProgressItems[index]?.progressData ?? [],
-      workoutCompleted: workoutProgressItems[index]?.workoutCompleted ?? false,
-    })),
+  const workoutsProgress = Array.isArray(progress.workoutsProgress) ? progress.workoutsProgress : []
+  const totalWorkoutsCount =
+    courseMockItems.find((course) => course.id === courseId)?.workoutIds.length ??
+    workoutsProgress.length
+  const completedWorkoutsCount = workoutsProgress.filter((workoutProgress) =>
+    Boolean(workoutProgress.workoutCompleted),
+  ).length
+
+  return calculateCourseProgressByCompletedWorkouts({
+    completedWorkoutsCount,
+    totalWorkoutsCount,
   })
 }
