@@ -12,9 +12,9 @@ export function MetaBadge({ iconAlt = '', iconSrc, text }: MetaBadgeProps) {
   return (
     <span className={styles['meta-badge']}>
       {iconAlt ? (
-        <Icon alt={iconAlt} size="small" src={iconSrc} />
+        <Icon alt={iconAlt} className={styles['meta-badge__icon']} size="small" src={iconSrc} />
       ) : (
-        <Icon alt="" decorative size="small" src={iconSrc} />
+        <Icon alt="" className={styles['meta-badge__icon']} decorative size="small" src={iconSrc} />
       )}
       <span className={styles['meta-badge__text']}>{text}</span>
     </span>

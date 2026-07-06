@@ -1,0 +1,96 @@
+.profile-dropdown {
+  display: flex;
+  width: 266px;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 34px;
+  padding: 30px;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 4px 67px 0 rgb(0 0 0 / 13%);
+}
+
+.profile-dropdown__user {
+  display: flex;
+  width: 206px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.profile-dropdown__name,
+.profile-dropdown__email {
+  height: 20px;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-dropdown__name {
+  width: 60px;
+  color: #000000;
+}
+
+.profile-dropdown__email {
+  width: 206px;
+  max-width: 206px;
+  color: #999999;
+}
+
+.profile-dropdown__actions {
+  display: flex;
+  width: 206px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-dropdown__button {
+  display: inline-flex;
+  width: 206px;
+  min-height: 52px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 26px;
+  border: 0;
+  border-radius: 46px;
+  background: #bcec30;
+  color: #000000;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.profile-dropdown__button:focus-visible {
+  outline: 2px solid #777777;
+  outline-offset: 3px;
+}
+
+.profile-dropdown__button--secondary {
+  border: 1px solid #000000;
+  background: #ffffff;
+}
+
+@media (max-width: 767px) {
+  .profile-dropdown {
+    width: min(266px, calc(100vw - 32px));
+    gap: 40px;
+    padding: 24px;
+  }
+
+  .profile-dropdown__user,
+  .profile-dropdown__actions,
+  .profile-dropdown__button,
+  .profile-dropdown__email {
+    width: 100%;
+  }
+}

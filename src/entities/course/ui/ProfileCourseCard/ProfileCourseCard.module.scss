@@ -1,0 +1,201 @@
+.profile-course-card {
+  display: flex;
+  width: 360px;
+  max-width: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 15px;
+  border-radius: var(--radius-card);
+  background: #ffffff;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.profile-course-card:focus-visible {
+  outline: 3px solid var(--color-blue-accent);
+  outline-offset: 4px;
+}
+
+.profile-course-card__image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 325px;
+  flex: 0 0 325px;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background-color: var(--color-card-meta-bg);
+}
+
+.profile-course-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+
+  &--yoga {
+    transform: scale(1.65);
+    background-color: #ffc700;
+    object-position: center 52%;
+    transform-origin: center center;
+  }
+
+  &--stretching {
+    transform: scale(1.04);
+    background-color: #2d98d0;
+    object-position: 43% 3.3%;
+    transform-origin: center center;
+  }
+
+  &--fitness {
+    transform: scale(2.3);
+    background-color: #ff9f12;
+    object-position: center 82px;
+    transform-origin: center center;
+  }
+
+  &--step-aerobics {
+    transform: scale(2.05);
+    background-color: #ff7868;
+    object-position: -50px -190px;
+    transform-origin: center bottom;
+  }
+
+  &--bodyflex {
+    transform: scale(1.56);
+    background-color: #814690;
+    object-position: -75px 11px;
+    transform-origin: center bottom;
+  }
+}
+
+.profile-course-card__remove-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+}
+
+.profile-course-card__remove-button:hover:not(:disabled) {
+  background-color: transparent;
+  opacity: 0.86;
+}
+
+.profile-course-card__remove-icon {
+  width: 26.67px;
+  height: 26.67px;
+}
+
+.profile-course-card__content {
+  display: flex;
+  width: 300px;
+  flex-direction: column;
+  padding: 0 26px;
+}
+
+.profile-course-card__title {
+  margin: 0;
+  color: var(--color-text-dark);
+  font-size: var(--font-size-course-title);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+.profile-course-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 18px 0 0;
+  list-style: none;
+}
+
+.profile-course-card__meta-item {
+  display: flex;
+}
+
+.profile-course-card__progress {
+  display: flex;
+  width: 300px;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.profile-course-card__progress-label {
+  margin: 0;
+  color: #000000;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.profile-course-card__progress-track {
+  width: 300px;
+  max-width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 50px;
+  background: #f2f2f2;
+}
+
+.profile-course-card__progress-value {
+  width: var(--profile-course-card-progress);
+  height: 6px;
+  border-radius: 50px;
+  background: #00c1ff;
+}
+
+.profile-course-card__action {
+  width: 300px;
+  max-width: 100%;
+  min-height: 52px;
+  margin-top: 40px;
+  padding: 16px 26px;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+@media (max-width: 767px) {
+  .profile-course-card {
+    width: 100%;
+  }
+
+  .profile-course-card__image--step-aerobics {
+    position: absolute;
+    top: -192px;
+    left: -95px;
+    width: 794.62px;
+    height: 557px;
+    transform: scale(1.9);
+    object-position: center;
+  }
+
+  .profile-course-card__content {
+    width: 300px;
+    max-width: 100%;
+    height: auto;
+    min-height: 274px;
+    padding: 0;
+    margin: 0 auto;
+  }
+
+  .profile-course-card__title {
+    color: var(--color-black);
+    font-size: 24px;
+    line-height: 1.1;
+  }
+
+  .profile-course-card__action {
+    width: 300px;
+    max-width: 100%;
+    height: 50px;
+    min-height: 50px;
+    border-radius: 46px;
+  }
+}
