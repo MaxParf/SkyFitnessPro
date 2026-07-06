@@ -1,0 +1,171 @@
+.workout-progress-modal {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.workout-progress-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(0 0 0 / 35%);
+  cursor: pointer;
+}
+
+.workout-progress-modal__dialog {
+  position: relative;
+  display: flex;
+  width: 426px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 48px;
+  padding: 40px;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 4px 67px -12px rgb(0 0 0 / 13%);
+}
+
+.workout-progress-modal__title {
+  width: 346px;
+  max-width: 100%;
+  min-height: 35px;
+  margin: 0;
+  color: #000000;
+  font-family: StratosSkyeng, var(--font-family-base);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.workout-progress-modal__content,
+.workout-progress-modal__form {
+  display: flex;
+  width: 346px;
+  max-width: 100%;
+  flex-direction: column;
+}
+
+.workout-progress-modal__content {
+  gap: 34px;
+}
+
+.workout-progress-modal__form {
+  gap: 34px;
+}
+
+.workout-progress-modal__fields {
+  display: flex;
+  width: 320px;
+  max-width: 100%;
+  max-height: 346px;
+  flex-direction: column;
+  gap: 20px;
+  padding-right: 8px;
+  overflow-y: auto;
+}
+
+.workout-progress-modal__field {
+  display: flex;
+  width: 320px;
+  max-width: 100%;
+  min-height: 102px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workout-progress-modal__label {
+  width: 320px;
+  max-width: 100%;
+  min-height: 40px;
+  color: #000000;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.workout-progress-modal__input {
+  width: 320px;
+  max-width: 100%;
+  height: 52px;
+  box-sizing: border-box;
+  margin-top: 10px;
+  padding: 16px 18px;
+  border: 1px solid #d0cece;
+  border-radius: 8px;
+  color: #000000;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+  outline: none;
+  box-shadow: none;
+}
+
+.workout-progress-modal__input::placeholder {
+  color: #d0cece;
+  opacity: 1;
+}
+
+.workout-progress-modal__input:hover {
+  border-color: #d0cece;
+  box-shadow: none;
+}
+
+.workout-progress-modal__input:focus-visible {
+  border-color: #000000;
+  outline: none;
+  box-shadow: none;
+}
+
+.workout-progress-modal__input::-webkit-outer-spin-button,
+.workout-progress-modal__input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.workout-progress-modal__input[type='number'] {
+  appearance: textfield;
+}
+
+.workout-progress-modal__save-button {
+  width: 346px;
+  max-width: 100%;
+  min-height: 52px;
+  padding: 16px 26px;
+  border-radius: 46px;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.workout-progress-modal__error {
+  margin: 0;
+  color: #c82d2d;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+@media (max-width: 480px) {
+  .workout-progress-modal {
+    padding: 16px;
+  }
+
+  .workout-progress-modal__dialog {
+    gap: 32px;
+    padding: 28px 20px;
+  }
+
+  .workout-progress-modal__title {
+    font-size: 28px;
+  }
+}
